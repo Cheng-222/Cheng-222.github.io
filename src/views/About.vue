@@ -7,16 +7,16 @@
           <img v-if="profile.avatar" :src="profile.avatar" alt="头像" class="avatar" />
           <div v-else class="avatar default">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 12c2.761 0 5-2.686 5-6s-2.239-6-5-6-5 2.686-5 6 2.239 6 5 6zm0 2c-3.866 0-7 3.582-7 8h14c0-4.418-3.134-8-7-8z"/>
+              <path d="M12 12c2.761 0 5-2.686 5-6s-2.239-6-5-6-5 2.686-5 6 5 6zm0 2c-3.866 0-7 3.582-7 8h14c0-4.418-3.134-8-7-8z"/>
             </svg>
           </div>
-          <label class="edit-avatar">
-            <input type="file" accept="image/*" @change="onAvatarSelected" />
-            更换头像
-          </label>
         </div>
+        <label class="edit-avatar">
+          <input type="file" accept="image/*" @change="onAvatarSelected" />
+          更换头像
+        </label>
       </div>
-
+      
       <div class="hero-right">
         <h1 class="hero-name">{{ profile.name || '技术博主' }}</h1>
         <p class="hero-title">{{ profile.title || '前端工程师 & 技术爱好者' }}</p>
@@ -201,8 +201,8 @@ export default {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.avatar { width: 154px; height: 154px; border-radius: 50%; object-fit: cover; }
-.avatar.default { display:flex; align-items:center; justify-content:center; background:#f3f4f6; color:#9ca3af; }
+.avatar { width: 164px; height: 164px; border-radius: 50%; object-fit: cover; }
+.avatar.default { width: 164px; height: 164px; border-radius: 50%; display:flex; align-items:center; justify-content:center; background:#f3f4f6; color:#9ca3af; }
 .edit-avatar { margin-top: 10px; font-size: 13px; color: #2563eb; cursor: pointer; text-align: center; }
 .edit-avatar input { display: none; }
 

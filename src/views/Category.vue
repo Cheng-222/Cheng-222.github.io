@@ -21,14 +21,28 @@
           封面图（URL）
           <input v-model="newCover" type="text" placeholder="https://..." />
         </label>
+        <label>
+          或选择本地封面
+          <input type="file" accept="image/*" ref="coverInput" @change="onCoverChange" />
+          <span class="cover-error" v-if="coverError">{{ coverError }}</span>
+          <div class="cover-preview" v-if="newCover">
+            <img :src="newCover" alt="封面预览" />
+            <button class="btn" @click="clearCover">清除封面</button>
+          </div>
+        </label>
         <label class="full-row">
           摘要
           <textarea v-model="newExcerpt" rows="2" placeholder="一句话摘要"></textarea>
         </label>
-        <label class="full-row">
-          正文（Markdown）
-          <MdEditor v-model="editorMarkdown" />
-        </label>
+        <div class="full-row">
+          <div>正文（Markdown）</div>
+          <MdEditor
+            v-model="editorMarkdown"
+            :toolbars="['title','quote','unorderedList','orderedList','code']"
+            :autoFocus="false"
+            :placeholder="'在此输入正文，点击插入代码可添加代码块'"
+          />
+        </div>
       </div>
       <!-- 编辑文章面板 -->
       <div v-if="showEditPanel" class="add-article-panel">
@@ -44,10 +58,24 @@
           封面图（URL）
           <input v-model="newCover" type="text" placeholder="https://..." />
         </label>
-        <label class="full-row">
-          正文（Markdown）
-          <MdEditor v-model="editorMarkdown" />
+        <label>
+          或选择本地封面
+          <input type="file" accept="image/*" ref="coverInput" @change="onCoverChange" />
+          <span class="cover-error" v-if="coverError">{{ coverError }}</span>
+          <div class="cover-preview" v-if="newCover">
+            <img :src="newCover" alt="封面预览" />
+            <button class="btn" @click="clearCover">清除封面</button>
+          </div>
         </label>
+        <div class="full-row">
+          <div>正文（Markdown）</div>
+          <MdEditor
+            v-model="editorMarkdown"
+            :toolbars="['title','quote','unorderedList','orderedList','code']"
+            :autoFocus="false"
+            :placeholder="'在此输入正文，点击插入代码可添加代码块'"
+          />
+        </div>
         <div class="full-row" style="display:flex; gap:.6rem; justify-content:flex-end;">
           <button class="btn" @click="cancelEdit">取消</button>
           <button class="btn success" @click="saveEditedArticle">保存修改</button>
@@ -118,149 +146,143 @@
 
 <script>
 import { getArticles, setArticles, getCategories, getCommentsMap, setCommentsMap } from '../utils/storage'
-import { ElMessage } from 'element-plus'
 import { MdEditor } from 'md-editor-v3'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
 export default {
   name: 'Category',
   components: { MdEditor },
   data() {
     return {
       articles: [],
-      categories: [
-        { id: 1, name: '技术分享', description: '分享前端、后端、算法等技术文章' },
-        { id: 2, name: '生活随笔', description: '记录生活中的点点滴滴' },
-        { id: 3, name: '读书笔记', description: '阅读心得和知识总结' },
-        { id: 4, name: '项目经验', description: '项目开发中的经验和教训' },
-      ],
+      currentCategory: null,
       currentPage: 1,
-     totalPages: 1,
-     showAddPanel: false,
-    showEditPanel: false,
-    editingArticleId: null,
-     newTitle: '',
-     newExcerpt: '',
-     newTags: '',
-     newContent: '',
+      pageSize: 6,
+      showAddPanel: false,
+      showEditPanel: false,
+      editingId: null,
+      newTitle: '',
+      newTags: '',
       newCover: '',
+      newExcerpt: '',
+      editorMarkdown: '',
       coverMaxBytes: 500 * 1024,
-      coverError: '',
-     editorHtml: '',
-     editorError: '',
-     editorImageMaxBytes: 500 * 1024
+      coverError: ''
     }
   },
   computed: {
-    currentCategory() {
-      const categoryId = parseInt(this.$route.params.id)
-      return this.categories.find(cat => cat.id === categoryId)
-    },
-  },
-  created() {
-
-   this.fetchCategoryArticles()
-  },
-  watch: {
-    '$route.params.id': function() {
-      this.currentPage = 1
-
-     this.fetchCategoryArticles()
+    totalPages() {
+      return Math.ceil(this.articles.length / this.pageSize) || 1
     }
   },
+  created() {
+    this.loadCategoryAndArticles()
+  },
   methods: {
-
-    async fetchCategoryArticles() {
-      try {
-        const categoryId = parseInt(this.$route.params.id) || 1;
-        const all = getArticles();
-        const filtered = all.filter(a => a.categoryId === categoryId).map(article => ({
-          ...article,
-          publishTime: new Date(article.publishTime),
-          tags: Array.isArray(article.tags) ? article.tags : (typeof article.tags === 'string' ? article.tags.split(',') : [])
-        }));
-        this.categories = getCategories();
-        this.totalPages = Math.ceil(filtered.length / 10) || 1;
-        const start = (this.currentPage - 1) * 10;
-        this.articles = filtered.slice(start, start + 10);
-      } catch (error) {
-        console.error('加载分类文章失败:', error);
-      }
+    loadCategoryAndArticles() {
+      const catId = parseInt(this.$route.params.id)
+      const cats = getCategories()
+      this.currentCategory = cats.find(c => c.id === catId) || { id: catId, name: '未分类', description: '查看所有文章分类' }
+      const list = getArticles().filter(a => a.categoryId === catId)
+      this.articles = list.sort((a, b) => new Date(b.publishTime) - new Date(a.publishTime))
     },
     formatDate(date) {
       const d = new Date(date)
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     },
     getCategoryName(id) {
-      const category = this.categories.find(c => c.id === id)
-      return category ? category.name : '未分类'
+      const cats = getCategories()
+      const c = cats.find(x => x.id === id)
+      return c ? c.name : '未分类'
     },
-    goToArticle(id) {
-      this.$router.push(`/article/${id}`)
-    },
-    goToTag(tag) {
-      this.$router.push(`/tags/${tag}`)
-    },
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--
-        this.fetchCategoryArticles()
-      }
-    },
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++
-        this.fetchCategoryArticles()
-      }
-    },
-    toggleAddArticle() {
-      this.showAddPanel = !this.showAddPanel
-    },
+    prevPage() { if (this.currentPage > 1) this.currentPage -= 1 },
+    nextPage() { const max = this.totalPages; if (this.currentPage < max) this.currentPage += 1 },
+    toggleAddArticle() { this.showAddPanel = !this.showAddPanel },
     saveNewArticle() {
-      const categoryId = parseInt(this.$route.params.id) || 1
-      if (!this.newTitle.trim()) {
-        ElMessage.warning('请填写标题')
-        return
-      }
-      const all = getArticles()
-      const newId = all.length ? Math.max(...all.map(a => a.id)) + 1 : 1
-      const tags = (this.newTags || '').split(',').map(t => t.trim()).filter(Boolean)
-      const newArticle = {
+      if (!this.newTitle.trim()) { ElMessage.warning('请输入标题'); return }
+      const tags = this.newTags.split(',').map(s => s.trim()).filter(Boolean)
+      const list = getArticles()
+      const newId = list.length ? Math.max(...list.map(x => x.id)) + 1 : 1
+      list.push({
         id: newId,
-        title: this.newTitle.trim(),
+        title: this.newTitle,
         publishTime: new Date().toISOString(),
-        categoryId,
-        excerpt: this.newExcerpt.trim(),
+        categoryId: this.currentCategory ? this.currentCategory.id : 1,
+        excerpt: this.newExcerpt || '',
+        content: this.editorMarkdown || '',
+        cover: this.newCover || '',
         tags,
         views: 0,
-        comments: 0,
-        content: this.editorMarkdown,
-        cover: this.newCover || ''
-      }
-      setArticles([newArticle, ...all])
+        comments: 0
+      })
+      setArticles(list)
+      this.articles = list.filter(a => a.categoryId === (this.currentCategory ? this.currentCategory.id : 1))
       this.showAddPanel = false
-      this.newTitle = ''
-      this.newExcerpt = ''
-      this.newTags = ''
-      this.newContent = ''
-      this.editorMarkdown = ''
-      this.newCover = ''
-      ElMessage.success('文章已添加')
-      this.fetchCategoryArticles()
+      this.newTitle = ''; this.newTags = ''; this.newCover = ''; this.newExcerpt = ''; this.editorMarkdown = ''
+      if (this.$refs.coverInput) this.$refs.coverInput.value = ''
+      ElMessage.success('已添加新文章')
+    },
+    startEditArticle(article) {
+      this.showEditPanel = true
+      this.editingId = article.id
+      this.newTitle = article.title
+      this.newTags = Array.isArray(article.tags) ? article.tags.join(',') : (typeof article.tags === 'string' ? article.tags : '')
+      this.newCover = article.cover || ''
+      this.editorMarkdown = article.content || ''
+    },
+    cancelEdit() {
+      this.showEditPanel = false
+      this.editingId = null
+      this.newTitle = ''; this.newTags = ''; this.newCover = ''; this.editorMarkdown = ''
+      if (this.$refs.coverInput) this.$refs.coverInput.value = ''
+    },
+    saveEditedArticle() {
+      if (!this.newTitle.trim()) { ElMessage.warning('请输入标题'); return }
+      const tags = this.newTags.split(',').map(s => s.trim()).filter(Boolean)
+      const list = getArticles()
+      const idx = list.findIndex(a => a.id === this.editingId)
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], title: this.newTitle, tags, cover: this.newCover || '', content: this.editorMarkdown || '' }
+        setArticles(list)
+        this.articles = list.filter(a => a.categoryId === (this.currentCategory ? this.currentCategory.id : 1))
+        this.showEditPanel = false
+        this.editingId = null
+        this.newTitle = ''; this.newTags = ''; this.newCover = ''; this.editorMarkdown = ''
+        if (this.$refs.coverInput) this.$refs.coverInput.value = ''
+        ElMessage.success('已保存修改')
+      } else {
+        ElMessage.warning('未找到要编辑的文章')
+      }
+    },
+    async deleteArticle(id) {
+      try {
+        await ElMessageBox.confirm('确定删除该文章？', '提示', { type: 'warning' })
+      } catch {
+        return
+      }
+      const list = getArticles().filter(a => a.id !== id)
+      setArticles(list)
+      this.articles = list.filter(a => a.categoryId === (this.currentCategory ? this.currentCategory.id : 1))
+      const map = getCommentsMap()
+      if (map[id]) {
+        delete map[id]
+        setCommentsMap(map)
+      }
+      ElMessage.success('已删除')
     },
     onCoverChange(e) {
       const file = e.target.files && e.target.files[0]
       if (!file) return
-
-     // size limit
-     const MAX = this.coverMaxBytes
-     if (file.size > MAX) {
-       const sizeKB = Math.round(file.size / 1024)
-       const maxKB = Math.round(MAX / 1024)
-       this.coverError = `图片过大：${sizeKB}KB，最大${maxKB}KB`
-       this.newCover = ''
-       if (this.$refs.coverInput) this.$refs.coverInput.value = ''
-       return
-     }
-     this.coverError = ''
+      const MAX = this.coverMaxBytes
+      if (file.size > MAX) {
+        const sizeKB = Math.round(file.size / 1024)
+        const maxKB = Math.round(MAX / 1024)
+        this.coverError = `图片过大：${sizeKB}KB，最大${maxKB}KB`
+        this.newCover = ''
+        if (this.$refs.coverInput) this.$refs.coverInput.value = ''
+        return
+      }
+      this.coverError = ''
       const reader = new FileReader()
       reader.onload = () => {
         this.newCover = reader.result
@@ -269,157 +291,47 @@ export default {
     },
     clearCover() {
       this.newCover = ''
-
       if (this.$refs.coverInput) {
         this.$refs.coverInput.value = ''
       }
     },
-    onEditorInput() {
-      const el = this.$refs.rtEditor
-      this.editorHtml = el ? el.innerHTML : ''
-    },
-    applyFormat(cmd) {
-      this.focusEditor()
-      document.execCommand(cmd, false, null)
-    },
-    applyHeading(tag) {
-      this.focusEditor()
-      document.execCommand('formatBlock', false, tag)
-    },
-    insertInlineCode() {
-      this.focusEditor()
-      const selection = window.getSelection()
-      if (!selection || selection.rangeCount === 0) return
-      const range = selection.getRangeAt(0)
-      const code = document.createElement('code')
-      code.textContent = range.toString() || 'code'
-      range.deleteContents()
-      range.insertNode(code)
-    },
-    insertCodeBlock() {
-      this.focusEditor()
-      const pre = document.createElement('pre')
-      const code = document.createElement('code')
-      code.textContent = '/* 在此编写代码 */\n'
-      pre.appendChild(code)
-      const sel = window.getSelection()
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0)
-        range.collapse(false)
-        range.insertNode(pre)
-      } else if (this.$refs.rtEditor) {
-        this.$refs.rtEditor.appendChild(pre)
-      }
-    },
-    triggerInsertImage() {
-      this.editorError = ''
-      if (this.$refs.rtImageInput) this.$refs.rtImageInput.click()
-    },
-    onEditorImageChange(e) {
-      const file = e.target.files && e.target.files[0]
-      if (!file) return
-      const MAX = this.editorImageMaxBytes
-      if (file.size > MAX) {
-        const sizeKB = Math.round(file.size / 1024)
-        const maxKB = Math.round(MAX / 1024)
-        this.editorError = `图片过大：${sizeKB}KB，最大${maxKB}KB`
-        if (this.$refs.rtImageInput) this.$refs.rtImageInput.value = ''
-        return
-      }
-      const reader = new FileReader()
-      reader.onload = () => {
-        const img = document.createElement('img')
-        img.src = reader.result
-        img.alt = '插入图片'
-        img.style.maxWidth = '100%'
-        img.style.display = 'block'
-        img.style.borderRadius = '6px'
-        img.style.width = '100%'
-        const sel = window.getSelection()
-        if (sel && sel.rangeCount > 0) {
-          const range = sel.getRangeAt(0)
-          range.collapse(false)
-          range.insertNode(img)
-          this.focusEditor()
-        } else if (this.$refs.rtEditor) {
-          this.$refs.rtEditor.appendChild(img)
-          this.focusEditor()
-        }
-        this.onEditorInput()
-      }
-      reader.readAsDataURL(file)
-    },
-    focusEditor() {
-      const el = this.$refs.rtEditor
-      if (!el) return
-      el.focus()
-    },
-    startEditArticle(article) {
-      this.showAddPanel = false
-      this.showEditPanel = true
-      this.editingArticleId = article.id
-      this.newTitle = article.title || ''
-      this.newExcerpt = article.excerpt || ''
-      this.newTags = Array.isArray(article.tags) ? article.tags.join(', ') : (article.tags || '')
-      this.newCover = article.cover || ''
-      this.editorMarkdown = article.content || ''
-    },
-    cancelEdit() {
-      this.showEditPanel = false
-      this.editingArticleId = null
-      this.newTitle = ''
-      this.newExcerpt = ''
-      this.newTags = ''
-      this.newCover = ''
-      this.editorMarkdown = ''
-    },
-    saveEditedArticle() {
-      if (!this.editingArticleId) return
-      if (!this.newTitle.trim()) {
-        ElMessage.warning('请填写标题')
-        return
-      }
-      const all = getArticles()
-      const idx = all.findIndex(a => a.id === this.editingArticleId)
-      if (idx === -1) {
-        ElMessage.error('文章不存在或已被删除')
-        return
-      }
-      const tags = (this.newTags || '').split(',').map(t => t.trim()).filter(Boolean)
-      const prev = all[idx]
-      all[idx] = {
-        ...prev,
-        title: this.newTitle.trim(),
-        excerpt: this.newExcerpt.trim(),
-        tags,
-        content: this.editorMarkdown,
-        cover: this.newCover || ''
-      }
-      setArticles(all)
-      this.showEditPanel = false
-      this.editingArticleId = null
-      ElMessage.success('文章已更新')
-      this.fetchCategoryArticles()
-    },
-    deleteArticle(id) {
-      const all = getArticles()
-      const next = all.filter(a => a.id !== id)
-      if (next.length === all.length) return
-      const map = getCommentsMap()
-      if (map && map[id]) {
-        delete map[id]
-        setCommentsMap(map)
-      }
-      setArticles(next)
-      if (this.editingArticleId === id) this.cancelEdit()
-      this.fetchCategoryArticles()
-      ElMessage.success('文章已删除')
-    }
+    goToArticle(id) { this.$router.push(`/article/${id}`) },
+    goToTag(tag) { this.$router.push(`/tags/${tag}`) }
   }
 }
 </script>
 
 <style scoped>
+.category-container { max-width: 1000px; margin: 0 auto; padding: 1.2rem; }
+.category-header { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+.category-title { font-size: 1.6rem; margin: 0; }
+.category-description { color: #666; margin: .2rem 0 .8rem; }
+.header-actions { display: flex; gap: .6rem; }
+.add-article-panel { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; margin-top: .8rem; }
+.add-article-panel label { display: flex; flex-direction: column; }
+.add-article-panel .full-row { grid-column: 1 / -1; }
+.cover-error { color: #ef4444; font-size: .9rem; }
+.cover-preview { grid-column: 1 / -1; display: flex; align-items: center; gap: .6rem; }
+.cover-preview img { width: 160px; height: 90px; object-fit: cover; border-radius: 6px; border: 1px solid #eee; }
+.main-content { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 1rem; }
+.content-wrapper { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.article-card { border: 1px solid #eee; border-radius: 8px; padding: .8rem; cursor: pointer; }
+.article-header { display: flex; justify-content: space-between; align-items: center; }
+.article-title { margin: 0; font-size: 1.2rem; }
+.article-meta { color: #888; font-size: .85rem; display: flex; gap: .6rem; }
+.card-actions { display: flex; gap: .4rem; }
+.article-cover { width: 100%; max-height: 220px; object-fit: cover; border-radius: 6px; border: 1px solid #eee; }
+.article-excerpt { color: #555; margin-top: .4rem; }
+.article-footer { display: flex; justify-content: space-between; align-items: center; margin-top: .6rem; }
+.article-tags { display: flex; gap: .4rem; flex-wrap: wrap; }
+.tag { padding: .2rem .6rem; background: #f5f5f5; border-radius: 20px; font-size: .8rem; color: #666; cursor: pointer; }
+.article-stats { display: flex; gap: 1rem; color: #666; }
+.stat-item { display: flex; align-items: center; gap: .2rem; }
+.btn { padding: .4rem .8rem; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; }
+.btn.primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+.btn.success { background: #10b981; color: #fff; border-color: #10b981; }
+.page-btn { padding: .4rem .8rem; border: 1px solid #ddd; background: #fff; border-radius: 6px; }
+.page-info { margin: 0 .6rem; }
 .category-container {
   min-height: 100vh;
 }
@@ -622,46 +534,15 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .category-header {
-    padding: 2rem 0;
-  }
-  
-  .category-title {
-    font-size: 1.8rem;
-  }
-  
-  .article-card {
-    padding: 1.5rem;
-  }
-  
-  .article-title {
-    font-size: 1.5rem;
-  }
-  
-  .article-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .article-preview {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 0.5rem;
-    width: 220px;
-    aspect-ratio: 16 / 9;
-  }
-  
-  .cover-preview img {
-    width: 20px;
-    height: 40px;
-    display: block;
-    object-fit: cover;
-    border-radius: 6px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-    border: 1px solid #eee;
-  }
-}.btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .9rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #111827; cursor: pointer; transition: all .2s; }
+  .category-header { padding: 2rem 0; }
+  .category-title { font-size: 1.8rem; }
+  .article-card { padding: 1.5rem; }
+  .article-title { font-size: 1.5rem; }
+  .article-footer { flex-direction: column; align-items: flex-start; }
+  .article-preview { display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; width: 220px; aspect-ratio: 16 / 9; }
+  .cover-preview img { width: 20px; height: 40px; display: block; object-fit: cover; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); border: 1px solid #eee; }
+}
+.btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .9rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #111827; cursor: pointer; transition: all .2s; }
 .btn:hover { box-shadow: 0 4px 10px rgba(0,0,0,.06); transform: translateY(-1px); }
 .btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
 .btn.success { background: #10b981; color: #fff; border-color: #10b981; }
@@ -670,27 +551,4 @@ export default {
 .add-article-panel label { display: flex; flex-direction: column; font-size: .9rem; color: #374151; }
 .add-article-panel input, .add-article-panel textarea { margin-top: .4rem; padding: .6rem .7rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: .95rem; }
 .add-article-panel .full-row { grid-column: 1 / -1; }
-.rt-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem;
-  margin: .5rem 0;
-}
-
-.hidden-input {
-  display: none;
-}
-
-.rt-editor {
-  min-height: 180px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: .6rem .7rem;
-  font-size: .95rem;
-}
-
-.rt-editor:empty:before {
-  content: attr(placeholder);
-  color: #9ca3af;
-}
 </style>

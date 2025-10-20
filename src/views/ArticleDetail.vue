@@ -28,7 +28,8 @@
 
         <!-- 文章正文 -->
         <div class="article-body">
-          <MdPreview :modelValue="article.content || ''" />
+          <div v-if="isLegacyHtml" v-html="legacyInnerHtml"></div>
+          <MdPreview v-else :modelValue="article.content || ''" />
         </div>
 
         <!-- 文章统计信息 -->
@@ -209,6 +210,18 @@ export default {
     },
     goToTag(tag) {
       this.$router.push(`/tags/${tag}`)
+    }
+  },
+  computed: {
+    isLegacyHtml() {
+      const c = this.article && this.article.content
+      return typeof c === 'string' && /<div\s+class="rich-content">[\s\S]*<\/div>/.test(c)
+    },
+    legacyInnerHtml() {
+      const c = this.article && this.article.content
+      if (!c) return ''
+      const m = /<div\s+class="rich-content">([\s\S]*?)<\/div>/.exec(c)
+      return m ? m[1] : c
     }
   }
 }

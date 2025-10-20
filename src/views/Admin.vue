@@ -44,7 +44,24 @@
         <label>分类ID<input type="number" v-model.number="articleForm.categoryId" /></label>
         <label>标签（逗号分隔）<input v-model="articleForm.tagsInput" placeholder="如：Vue3,前端开发" /></label>
         <label>摘要<textarea v-model="articleForm.excerpt" rows="3" /></label>
-        <label class="full-row">正文（Markdown）<MdEditor v-model="articleForm.content" /></label>
+        <label>封面图（URL）<input v-model="articleForm.cover" placeholder="https://..." /></label>
+        <label>
+          或选择本地封面
+          <input type="file" accept="image/*" ref="adminCoverInput" @change="onAdminCoverChange" />
+          <span class="muted" v-if="coverError">{{ coverError }}</span>
+          <div class="cover-preview" v-if="articleForm.cover">
+            <img :src="articleForm.cover" alt="封面预览" />
+          </div>
+        </label>
+        <div>
+          正文（Markdown）
+          <MdEditor
+            v-model="articleForm.content"
+            :toolbars="['title','quote','unorderedList','orderedList','code']"
+            :autoFocus="false"
+            :placeholder="'在此输入正文，点击插入代码可添加代码块'"
+          />
+        </div>
       </div>
       <div class="actions">
         <button class="primary" @click="saveArticle">保存文章</button>
@@ -114,9 +131,11 @@ export default {
       profile: { name: '', title: '', email: '', wechat: '', intro: '' },
       articles: [],
       categories: [],
-      articleForm: { id: null, title: '', categoryId: 1, excerpt: '', content: '', tagsInput: '' },
+      articleForm: { id: null, title: '', categoryId: 1, excerpt: '', content: '', tagsInput: '', cover: '' },
       categoryForm: { id: null, name: '', description: '' },
-      dumpText: ''
+      dumpText: '',
+      coverMaxBytes: 500 * 1024,
+      coverError: ''
     }
   },
   mounted() {
@@ -138,10 +157,12 @@ export default {
     editArticle(a) {
       this.tab = 'articles'
       const tags = Array.isArray(a.tags) ? a.tags : (typeof a.tags === 'string' ? a.tags.split(',') : [])
-      this.articleForm = { id: a.id, title: a.title, categoryId: a.categoryId, excerpt: a.excerpt, content: a.content || '', tagsInput: tags.join(',') }
+      this.articleForm = { id: a.id, title: a.title, categoryId: a.categoryId, excerpt: a.excerpt, content: a.content || '', tagsInput: tags.join(','), cover: a.cover || '' }
     },
     resetArticleForm() {
-      this.articleForm = { id: null, title: '', categoryId: 1, excerpt: '', content: '', tagsInput: '' }
+      this.articleForm = { id: null, title: '', categoryId: 1, excerpt: '', content: '', tagsInput: '', cover: '' }
+      this.coverError = ''
+      if (this.$refs.adminCoverInput) this.$refs.adminCoverInput.value = ''
     },
     saveArticle() {
       const tags = this.articleForm.tagsInput
@@ -158,6 +179,7 @@ export default {
             categoryId: this.articleForm.categoryId,
             excerpt: this.articleForm.excerpt,
             content: this.articleForm.content,
+            cover: this.articleForm.cover || '',
             tags
           }
         }
@@ -170,6 +192,7 @@ export default {
           categoryId: this.articleForm.categoryId,
           excerpt: this.articleForm.excerpt,
           content: this.articleForm.content,
+          cover: this.articleForm.cover || '',
           tags,
           views: 0,
           comments: 0
@@ -198,47 +221,15 @@ export default {
     },
     displayTags(tags) {
       const arr = Array.isArray(tags) ? tags : (typeof tags === 'string' ? tags.split(',') : [])
-      return arr.join(', ')
-    },
-    // Categories
-    editCategory(c) {
-      this.tab = 'categories'
-      this.categoryForm = { id: c.id, name: c.name, description: c.description || '' }
-    },
-    resetCategoryForm() {
-      this.categoryForm = { id: null, name: '', description: '' }
-    },
-    saveCategory() {
-      const list = getCategories()
-      const idx = list.findIndex(x => x.id === this.categoryForm.id)
-      if (idx >= 0) {
-        list[idx] = { ...list[idx], name: this.categoryForm.name, description: this.categoryForm.description }
-      } else {
-        list.push({ id: this.categoryForm.id || (list.length ? Math.max(...list.map(x => x.id)) + 1 : 1), name: this.categoryForm.name, description: this.categoryForm.description })
-      }
-      setCategories(list)
-      this.categories = list
-      this.resetCategoryForm()
-      ElMessage.success('分类已保存')
-    },
-    async deleteCategory(id) {
-      try {
-        await ElMessageBox.confirm('确定删除该分类？', '提示', { type: 'warning' })
-      } catch {
-        return
-      }
-      const list = getCategories().filter(x => x.id !== id)
-      setCategories(list)
-      this.categories = list
-      ElMessage.success('已删除')
+      return arr.join(',')
     },
     // Backup
     refreshDump() {
       const dump = {
-        profile: getProfile(),
-        articles: getArticles(),
-        categories: getCategories(),
-        comments: getCommentsMap()
+        profile: this.profile,
+        articles: this.articles,
+        categories: this.categories,
+        commentsMap: getCommentsMap()
       }
       this.dumpText = JSON.stringify(dump, null, 2)
     },
@@ -250,42 +241,135 @@ export default {
       a.download = 'blog-data-backup.json'
       a.click()
       URL.revokeObjectURL(url)
+      ElMessage.success('已下载备份文件')
     },
-    importDump() {
+    async importDump() {
       try {
-        const obj = JSON.parse(this.dumpText)
-        setProfile(obj.profile)
-        setArticles(obj.articles)
-        setCategories(obj.categories)
-        setCommentsMap(obj.comments)
-        ElMessage.success('导入完成')
+        const parsed = JSON.parse(this.dumpText)
+        if (!parsed || typeof parsed !== 'object') throw new Error('JSON格式不正确')
+        setProfile(parsed.profile || {})
+        setArticles(parsed.articles || [])
+        setCategories(parsed.categories || [])
+        setCommentsMap(parsed.commentsMap || {})
         this.loadAll()
+        ElMessage.success('数据已导入')
       } catch (e) {
-        ElMessage.error('JSON不合法，请检查后重试')
+        ElMessageBox.alert(`导入失败：${e.message}`, '错误', { type: 'error' })
       }
+    },
+    // Cover upload
+    onAdminCoverChange(e) {
+      const file = e.target.files && e.target.files[0]
+      if (!file) return
+      const MAX = this.coverMaxBytes
+      if (file.size > MAX) {
+        const sizeKB = Math.round(file.size / 1024)
+        const maxKB = Math.round(MAX / 1024)
+        this.coverError = `图片过大：${sizeKB}KB，最大${maxKB}KB`
+        this.articleForm.cover = ''
+        if (this.$refs.adminCoverInput) this.$refs.adminCoverInput.value = ''
+        return
+      }
+      this.coverError = ''
+      const reader = new FileReader()
+      reader.onload = () => {
+        this.articleForm.cover = reader.result
+      }
+      reader.readAsDataURL(file)
     }
   }
 }
 </script>
 
 <style scoped>
-.admin-container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-.tabs { display: flex; gap: .5rem; margin-bottom: 1rem; }
-.tabs button { padding: .5rem 1rem; border: 1px solid #e5e7eb; background: #fff; border-radius: 6px; cursor: pointer; }
-.tabs button.active { background: #667eea; color: #fff; border-color: #667eea; }
-.card { background: #fff; border-radius: 8px; padding: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,.06); }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
-.grid label { display: flex; flex-direction: column; font-size: .9rem; color: #555; }
-.grid input, .grid textarea { margin-top: .4rem; padding: .6rem; border: 1px solid #e5e7eb; border-radius: 6px; }
-.actions { display: flex; gap: .6rem; margin-top: .8rem; }
-.primary { background: #667eea; color: #fff; border: none; border-radius: 6px; padding: .6rem 1rem; cursor: pointer; }
-.danger { background: #ef4444; color: #fff; border: none; border-radius: 6px; padding: .6rem .8rem; cursor: pointer; }
-.list { margin-top: .5rem; }
-.list-item { display: flex; justify-content: space-between; align-items: center; padding: .6rem .2rem; border-bottom: 1px dashed #eee; }
+.admin-container { padding: 1.2rem; }
+.tabs { display: flex; gap: .5rem; margin-bottom: .8rem; }
+.tabs button { padding: .4rem .8rem; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+.tabs .active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+.card { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 1rem; }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; }
+.grid .full-row { grid-column: 1 / -1; }
+.list { border: 1px solid #eee; border-radius: 6px; }
+.list-item { display: flex; justify-content: space-between; padding: .6rem .8rem; border-bottom: 1px solid #f1f1f1; }
+.list-item:last-child { border-bottom: none; }
 .item-actions { display: flex; gap: .4rem; }
-.muted { color: #888; font-size: .9rem; }
-textarea { width: 100%; }
-@media (max-width: 768px) {
-  .grid { grid-template-columns: 1fr; }
+.actions { margin-top: .8rem; display: flex; gap: .6rem; }
+.primary { background: #10b981; color: #fff; border: 1px solid #10b981; padding: .5rem .8rem; border-radius: 6px; }
+.danger { background: #ef4444; color: #fff; border: 1px solid #ef4444; padding: .5rem .8rem; border-radius: 6px; }
+.muted { color: #888; font-size: .85rem; }
+.cover-preview { grid-column: 1 / -1; margin-top: .4rem; }
+.cover-preview img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 6px; border: 1px solid #eee; }
+/* 恢复更丰富的管理页样式，保持原有布局 */
+.page {
+  padding: 1rem;
 }
+
+.tabs {
+  display: flex;
+  gap: .6rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  padding: .5rem .9rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+
+.list, .form {
+  margin-top: 1rem;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+  margin-bottom: .8rem;
+}
+
+.form input, .form textarea, .form select {
+  padding: .6rem .7rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: .6rem;
+}
+
+.btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .9rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #111827; cursor: pointer; transition: all .2s; }
+.btn:hover { box-shadow: 0 4px 10px rgba(0,0,0,.06); transform: translateY(-1px); }
+.btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+.btn.success { background: #10b981; color: #fff; border-color: #10b981; }
+
+/* 列表样式 */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th, .table td {
+  border: 1px solid #e5e7eb;
+  padding: .5rem;
+}
+.table th {
+  background: #f8fafc;
+}
+
 </style>

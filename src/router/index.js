@@ -30,6 +30,12 @@ const routes = [
     name: 'Tags',
     component: () => import('../views/Tags.vue'),
     meta: { title: '标签' }
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: () => import('../views/Admin.vue'),
+    meta: { title: '数据管理' }
   }
 ]
 

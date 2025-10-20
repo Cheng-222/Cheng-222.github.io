@@ -20,10 +20,16 @@
               #{{ tag }}
             </span>
           </div>
+         <div v-if="article.cover" class="detail-cover">
+           <img :src="article.cover" alt="文章封面" />
+         </div>
+          <!-- 编辑功能已取消：详情页不提供编辑入口 -->
         </div>
 
         <!-- 文章正文 -->
-        <div class="article-body" v-html="article.content"></div>
+        <div class="article-body">
+          <MdPreview :modelValue="article.content || ''" />
+        </div>
 
         <!-- 文章统计信息 -->
         <div class="article-stats">
@@ -127,8 +133,12 @@
 </template>
 
 <script>
+import { getArticleById, getPrevNext, getComments, addComment, likeComment as likeCommentUtil, getCategories } from '../utils/storage'
+import { MdPreview } from 'md-editor-v3'
+import { ElMessage } from 'element-plus'
 export default {
   name: 'ArticleDetail',
+  components: { MdPreview },
   data() {
     return {
       article: null,
@@ -151,161 +161,40 @@ export default {
     async fetchArticleDetail() {
       try {
         const articleId = parseInt(this.$route.params.id);
-        
-        // 调用后端API获取文章详情
-        const articleResponse = await fetch(`http://localhost:3000/api/articles/${articleId}`);
-        const articleData = await articleResponse.json();
-        
+        const data = getArticleById(articleId);
+        if (!data) {
+          throw new Error('文章不存在');
+        }
         this.article = {
-          ...articleData,
-          tags: typeof articleData.tags === 'string' ? articleData.tags.split(',') : articleData.tags,
-          publishTime: new Date(articleData.publishTime)
+          ...data,
+          tags: Array.isArray(data.tags) ? data.tags : (typeof data.tags === 'string' ? data.tags.split(',') : []),
+          publishTime: new Date(data.publishTime)
         };
-        
-        // 调用后端API获取评论列表
-        const commentsResponse = await fetch(`http://localhost:3000/api/comments?articleId=${articleId}`);
-        const commentsData = await commentsResponse.json();
-        
-        this.comments = commentsData.map(comment => ({
-          ...comment,
-          time: new Date(comment.time)
-        }));
-        
-        // 调用后端API获取上下篇
-        const siblingsResponse = await fetch(`http://localhost:3000/api/articles/${articleId}/siblings`);
-        const siblingsData = await siblingsResponse.json();
-        
-        this.prevArticle = siblingsData.prev;
-        this.nextArticle = siblingsData.next;
+
+        this.comments = getComments(articleId).map(c => ({ ...c, time: new Date(c.time) }));
+        const siblings = getPrevNext(articleId);
+        this.prevArticle = siblings.prev;
+        this.nextArticle = siblings.next;
+        this.categories = getCategories();
       } catch (error) {
-        console.error('获取文章详情失败:', error);
-        // 如果API调用失败，使用模拟数据
-        const articleId = parseInt(this.$route.params.id);
-        
-        const mockArticle = {
-          id: articleId,
-          title: articleId === 1 ? 'Vue 3 Composition API 最佳实践' : 
-                 articleId === 2 ? '如何高效学习新技术栈' : 'Node.js 性能优化技巧',
-          publishTime: new Date('2024-01-15'),
-          categoryId: 1,
-          readTime: 8,
-          tags: ['Vue3', 'Composition API', '前端开发'],
-          views: 1234,
-          comments: 56,
-          content: `
-            <div class="rich-content">
-              <p>在 Vue 3 中，Composition API 为我们提供了更灵活的组件逻辑组织方式。本文将详细介绍 Composition API 的最佳实践，帮助你更好地构建 Vue 应用。</p>
-              
-              <h2>什么是 Composition API？</h2>
-              <p>Composition API 是 Vue 3 中引入的新特性，它允许我们以函数式的方式组织组件逻辑，而不是通过选项式 API。这种方式在处理复杂组件时特别有用。</p>
-              
-              <h2>为什么使用 Composition API？</h2>
-              <ul>
-                <li>更好的逻辑复用</li>
-                <li>更好的类型推断</li>
-                <li>更灵活的代码组织</li>
-                <li>更好的 Tree-shaking 支持</li>
-              </ul>
-              
-              <h2>基本用法示例</h2>
-              <pre><code>import { ref, computed, onMounted } from 'vue'
-
-export default {
-  setup() {
-    const count = ref(0)
-    const doubleCount = computed(() => count.value * 2)
-    
-    const increment = () => {
-      count.value++
-    }
-    
-    onMounted(() => {
-      console.log('组件已挂载')
-    })
-    
-    return {
-      count,
-      doubleCount,
-      increment
-    }
-  }
-}</code></pre>
-              
-              <h2>逻辑复用</h2>
-              <p>通过 Composition API，我们可以轻松地提取和复用组件逻辑：</p>
-              
-              <pre><code>// useCounter.js
-import { ref, computed } from 'vue'
-
-export function useCounter(initialValue = 0) {
-  const count = ref(initialValue)
-  const doubleCount = computed(() => count.value * 2)
-  
-  const increment = () => {
-    count.value++
-  }
-  
-  return {
-    count,
-    doubleCount,
-    increment
-  }
-}</code></pre>
-              
-              <p>然后在组件中使用：</p>
-              
-              <pre><code>import { useCounter } from './useCounter'
-
-export default {
-  setup() {
-    const { count, doubleCount, increment } = useCounter(10)
-    
-    return {
-      count,
-      doubleCount,
-      increment
-    }
-  }
-}</code></pre>
-              
-              <h2>总结</h2>
-              <p>Composition API 为 Vue 开发者提供了更灵活、更强大的工具来构建复杂应用。通过合理使用，我们可以创建更易于维护和测试的代码。</p>
-            </div>
-          `
-        };
-        
-        this.article = mockArticle;
-        
-        this.comments = [
-          {
-            id: 1,
-            author: '张三',
-            time: new Date('2024-01-16'),
-            content: '这篇文章写得真好，学到了很多！',
-            likes: 12
-          },
-          {
-            id: 2,
-            author: '李四',
-            time: new Date('2024-01-17'),
-            content: 'Composition API 确实比 Options API 更灵活，特别是在逻辑复用时。',
-            likes: 8
-          }
-        ];
-        
-        if (articleId > 1) {
-          this.prevArticle = {
-            id: articleId - 1,
-            title: '上一篇文章标题'
-          };
-        }
-        if (articleId < 3) {
-          this.nextArticle = {
-            id: articleId + 1,
-            title: '下一篇文章标题'
-          };
-        }
+        console.error('加载文章详情失败:', error);
       }
+    },
+
+    submitComment() {
+      if (!this.newComment.trim()) {
+        ElMessage.warning('请输入评论内容')
+        return
+      }
+      const created = addComment(this.article.id, this.newComment.trim(), '当前用户');
+      this.comments.push({ ...created, time: new Date(created.time) });
+      this.newComment = ''
+      ElMessage.success('评论提交成功')
+    },
+    likeComment(id) {
+      likeCommentUtil(this.article.id, id);
+      const idx = this.comments.findIndex(c => c.id === id);
+      if (idx >= 0) this.comments[idx].likes += 1;
     },
     formatDate(date) {
       const d = new Date(date)
@@ -320,30 +209,6 @@ export default {
     },
     goToTag(tag) {
       this.$router.push(`/tags/${tag}`)
-    },
-    submitComment() {
-      if (!this.newComment.trim()) {
-        alert('请输入评论内容')
-        return
-      }
-      
-      const comment = {
-        id: this.comments.length + 1,
-        author: '当前用户',
-        time: new Date(),
-        content: this.newComment.trim(),
-        likes: 0
-      }
-      
-      this.comments.push(comment)
-      this.newComment = ''
-      alert('评论提交成功')
-    },
-    likeComment(id) {
-      const comment = this.comments.find(c => c.id === id)
-      if (comment) {
-        comment.likes++
-      }
     }
   }
 }
@@ -706,3 +571,27 @@ textarea {
   }
 }
 </style>
+.detail-cover {
+  margin-top: 1rem;
+}
+
+.detail-cover img {
+  display: block;
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+  aspect-ratio: 16 / 9;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+
+@media (max-width: 768px) {
+  .detail-cover img {
+    max-height: 240px;
+    aspect-ratio: 16 / 9;
+  }
+}

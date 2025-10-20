@@ -7,11 +7,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 中间件
 app.use(cors());
-app.use(bodyParser.json());
-
-// 模拟数据（当数据库连接失败时使用）
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true }));
 const mockArticles = [
   {
     id: 1,
@@ -206,29 +204,235 @@ app.post('/api/comments/:id/like', async (req, res) => {
   }
 });
 
+// 模拟数据开关（无数据库时仍可运行）
+const USE_MOCK = process.env.USE_MOCK === 'true';
+
 // 健康检查
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: '服务器运行正常' });
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// 现有文章/分类/评论API 保持不变
+app.get('/api/articles', async (req, res) => {
+  try {
+    // 尝试从数据库获取数据
+    const [rows] = await pool.query('SELECT * FROM articles ORDER BY publishTime DESC');
+    res.json(rows);
+  } catch (error) {
+    console.log('使用模拟数据');
+    // 使用模拟数据
+    res.json(mockArticles);
+  }
+});
+
+// 获取文章详情
+app.get('/api/articles/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query('SELECT * FROM articles WHERE id = ?', [id]);
+    if (rows.length > 0) {
+      res.json(rows[0]);
+    } else {
+      res.status(404).json({ error: '文章未找到' });
+    }
+  } catch (error) {
+    console.log('使用模拟数据');
+    // 使用模拟数据
+    const article = mockArticles.find(a => a.id === parseInt(id));
+    if (article) {
+      res.json(article);
+    } else {
+      res.status(404).json({ error: '文章未找到' });
+    }
+  }
+});
+
+// 获取分类列表
+app.get('/api/categories', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM categories');
+    res.json(rows);
+  } catch (error) {
+    console.log('使用模拟数据');
+    res.json(mockCategories);
+  }
+});
+
+// 获取特定分类的文章
+app.get('/api/categories/:id/articles', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM articles WHERE categoryId = ? ORDER BY publishTime DESC', 
+      [id]
+    );
+    res.json(rows);
+  } catch (error) {
+    console.log('使用模拟数据');
+    const articles = mockArticles.filter(a => a.categoryId === parseInt(id));
+    res.json(articles);
+  }
+});
+
+// 获取标签相关的文章
+app.get('/api/tags/:tag/articles', async (req, res) => {
+  const { tag } = req.params;
+  try {
+    // 这里需要根据实际数据库设计来查询
+    const [rows] = await pool.query(
+      'SELECT * FROM articles WHERE tags LIKE ? ORDER BY publishTime DESC', 
+      [`%${tag}%`]
+    );
+    res.json(rows);
+  } catch (error) {
+    console.log('使用模拟数据');
+    const articles = mockArticles.filter(a => a.tags.includes(tag));
+    res.json(articles);
+  }
+});
+
+// 获取文章评论
+app.get('/api/articles/:id/comments', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM comments WHERE articleId = ? ORDER BY time DESC', 
+      [id]
+    );
+    res.json(rows);
+  } catch (error) {
+    console.log('使用模拟数据');
+    const comments = mockComments.filter(c => c.articleId === parseInt(id));
+    res.json(comments);
+  }
+});
+
+// 添加评论
+app.post('/api/articles/:id/comments', async (req, res) => {
+  const { id } = req.params;
+  const { author, content } = req.body;
+  
+  if (!author || !content) {
+    return res.status(400).json({ error: '缺少必要的评论信息' });
+  }
+  
+  const newComment = {
+    id: Date.now(), // 临时ID，实际应使用数据库自增ID
+    articleId: parseInt(id),
+    author,
+    content,
+    time: new Date().toISOString(),
+    likes: 0
+  };
+  
+  try {
+    await pool.query(
+      'INSERT INTO comments (articleId, author, content, time, likes) VALUES (?, ?, ?, ?, ?)',
+      [newComment.articleId, newComment.author, newComment.content, newComment.time, newComment.likes]
+    );
+    res.status(201).json(newComment);
+  } catch (error) {
+    console.log('使用模拟数据');
+    // 在模拟环境中，我们直接返回新评论
+    res.status(201).json(newComment);
+  }
+});
+
+// 点赞评论
+app.post('/api/comments/:id/like', async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    await pool.query('UPDATE comments SET likes = likes + 1 WHERE id = ?', [id]);
+    const [rows] = await pool.query('SELECT likes FROM comments WHERE id = ?', [id]);
+    res.json({ likes: rows[0].likes });
+  } catch (error) {
+    console.log('使用模拟数据');
+    // 在模拟环境中，我们模拟点赞操作
+    res.json({ likes: Math.floor(Math.random() * 100) + 1 });
+  }
+});
+
+// 新增：个人资料 API（MySQL）
+app.get('/api/profile', async (req, res) => {
+  if (USE_MOCK) {
+    return res.json({
+      id: 1,
+      name: '技术博主',
+      title: '前端工程师 & 技术爱好者',
+      intro: '热爱技术，喜欢分享，致力于探索前端技术的无限可能。',
+      email: 'example@email.com',
+      wechat: 'example_wechat',
+      avatar: null
+    });
+  }
+  try {
+    const [rows] = await pool.query('SELECT * FROM profile WHERE id = 1');
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('获取个人资料失败:', error);
+    res.status(500).json({ message: 'Failed to get profile' });
+  }
+});
+
+app.put('/api/profile', async (req, res) => {
+  const { name, title, intro, email, wechat, avatar } = req.body || {};
+
+  if (USE_MOCK) {
+    return res.json({
+      id: 1, name, title, intro, email, wechat, avatar
+    });
+  }
+
+  try {
+    await pool.query(
+      'UPDATE profile SET name = ?, title = ?, intro = ?, email = ?, wechat = ?, avatar = ? WHERE id = 1',
+      [name || '', title || '', intro || '', email || '', wechat || '', avatar || null]
+    );
+    const [rows] = await pool.query('SELECT * FROM profile WHERE id = 1');
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('更新个人资料失败:', error);
+    res.status(500).json({ message: 'Failed to update profile' });
+  }
+});
+
+// 健康检查接口
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
 // 启动服务器
 async function startServer() {
-  // 测试数据库连接
-  await testConnection();
-  
-  app.listen(PORT, () => {
-    console.log(`服务器运行在 http://localhost:${PORT}`);
-    console.log('API 端点:');
-    console.log('- GET /api/articles - 获取文章列表');
-    console.log('- GET /api/articles/:id - 获取文章详情');
-    console.log('- GET /api/categories - 获取分类列表');
-    console.log('- GET /api/categories/:id/articles - 获取特定分类的文章');
-    console.log('- GET /api/tags/:tag/articles - 获取标签相关的文章');
-    console.log('- GET /api/articles/:id/comments - 获取文章评论');
-    console.log('- POST /api/articles/:id/comments - 添加评论');
-    console.log('- GET /health - 健康检查');
-  });
+  try {
+    if (!USE_MOCK) {
+      await pool.query('SELECT 1');
+      console.log('数据库连接正常');
+    } else {
+      console.log('使用模拟数据模式运行（USE_MOCK=true）');
+    }
+
+    app.listen(PORT, () => {
+      console.log(`服务器已启动，端口: ${PORT}`);
+      console.log('可用API:');
+      console.log('GET  /api/articles');
+      console.log('GET  /api/articles/:id');
+      console.log('POST /api/articles');
+      console.log('GET  /api/categories');
+      console.log('GET  /api/comments/:articleId');
+      console.log('POST /api/comments/:articleId');
+      console.log('POST /api/comments/:id/like');
+      console.log('GET  /api/profile');
+      console.log('PUT  /api/profile');
+      console.log('GET  /api/health');
+    });
+  } catch (error) {
+    console.error('服务器启动失败:', error.message);
+    process.exit(1);
+  }
 }
 
-// 启动服务器
 startServer();

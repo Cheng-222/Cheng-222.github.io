@@ -71,6 +71,7 @@
 </template>
 
 <script>
+import { getArticles, getCategories } from '../utils/storage'
 export default {
   name: 'Tags',
   data() {
@@ -103,72 +104,22 @@ export default {
   methods: {
     async fetchTaggedArticles() {
       const tag = this.currentTag
-      
       try {
-        // 调用后端API获取标签相关文章
-        const articlesResponse = await fetch(`http://localhost:3000/api/articles?tag=${encodeURIComponent(tag)}`);
-        const articlesData = await articlesResponse.json();
-        
-        // 格式化文章数据
-        this.articles = articlesData.map(article => ({
+        const all = getArticles();
+        const filtered = all.filter(article => {
+          const tags = Array.isArray(article.tags) ? article.tags : (typeof article.tags === 'string' ? article.tags.split(',') : []);
+          const tagsLower = tags.map(t => String(t).toLowerCase());
+          return tagsLower.includes(String(tag).toLowerCase());
+        }).map(article => ({
           ...article,
-          publishTime: new Date(article.publishTime),
-          tags: typeof article.tags === 'string' ? article.tags.split(',') : article.tags
+          publishTime: new Date(article.publishTime)
         }));
-        
-        // 计算总页数
-        this.totalPages = Math.ceil(this.articles.length / 10);
+        this.categories = getCategories();
+        this.totalPages = Math.ceil(filtered.length / 10) || 1;
+        const start = (this.currentPage - 1) * 10;
+        this.articles = filtered.slice(start, start + 10);
       } catch (error) {
-        console.error('获取标签文章失败:', error);
-        // 如果API调用失败，使用模拟数据
-        const allArticles = [
-          {
-            id: 1,
-            title: 'Vue 3 Composition API 最佳实践',
-            publishTime: new Date('2024-01-15'),
-            categoryId: 1,
-            excerpt: 'Vue 3 的 Composition API 为我们提供了更灵活的组件逻辑组织方式，本文将分享一些在实际项目中使用 Composition API 的最佳实践...',
-            tags: ['Vue3', 'Composition API', '前端开发'],
-            views: 1234,
-            comments: 56
-          },
-          {
-            id: 2,
-            title: '如何高效学习新技术栈',
-            publishTime: new Date('2024-01-10'),
-            categoryId: 3,
-            excerpt: '在技术快速迭代的今天，如何高效地学习新技术栈成为每个开发者都需要面对的挑战。本文将分享我的一些学习方法和经验...',
-            tags: ['学习方法', '职业发展'],
-            views: 890,
-            comments: 34
-          },
-          {
-            id: 3,
-            title: 'Node.js 性能优化技巧',
-            publishTime: new Date('2024-01-05'),
-            categoryId: 1,
-            excerpt: 'Node.js 作为服务端 JavaScript 运行环境，其性能优化一直是开发者关注的焦点。本文将介绍一些实用的性能优化技巧...',
-            tags: ['Node.js', '性能优化', '后端开发'],
-            views: 1567,
-            comments: 78
-          },
-          {
-            id: 4,
-            title: '前端开发中的常见陷阱',
-            publishTime: new Date('2024-01-01'),
-            categoryId: 1,
-            excerpt: '在前端开发过程中，我们经常会遇到一些容易被忽视的陷阱。本文总结了一些常见的陷阱及其解决方案...',
-            tags: ['前端开发', '最佳实践'],
-            views: 987,
-            comments: 45
-          }
-        ]
-        
-        // 筛选包含当前标签的文章
-        this.articles = allArticles.filter(article => 
-          article.tags.includes(tag)
-        )
-        this.totalPages = Math.ceil(this.articles.length / 10) // 假设每页10篇文章
+        console.error('加载标签文章失败:', error);
       }
     },
     formatDate(date) {
@@ -188,13 +139,13 @@ export default {
     prevPage() {
       if (this.currentPage > 1) {
         this.currentPage--
-        // 实际项目中应该带页码参数重新获取数据
+        this.fetchTaggedArticles()
       }
     },
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage++
-        // 实际项目中应该带页码参数重新获取数据
+        this.fetchTaggedArticles()
       }
     }
   }

@@ -70,6 +70,20 @@ async function initDatabase() {
       )
     `);
     console.log('评论表已创建');
+
+    // 创建个人资料表
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS profile (
+        id INT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        title VARCHAR(255) DEFAULT '',
+        intro TEXT,
+        email VARCHAR(255) DEFAULT '',
+        wechat VARCHAR(255) DEFAULT '',
+        avatar MEDIUMTEXT
+      )
+    `);
+    console.log('个人资料表已创建');
     
     // 插入默认分类数据
     const [categories] = await connection.query('SELECT * FROM categories');
@@ -115,6 +129,23 @@ async function initDatabase() {
         (2, '王五', '学习方法分享得很实用，感谢！', 5)
       `);
       console.log('示例评论数据已插入');
+    }
+
+    // 插入默认个人资料
+    const [profileRows] = await connection.query('SELECT * FROM profile WHERE id = 1');
+    if (profileRows.length === 0) {
+      await connection.query(
+        'INSERT INTO profile (id, name, title, intro, email, wechat, avatar) VALUES (1, ?, ?, ?, ?, ?, ?)',
+        [
+          '技术博主',
+          '前端工程师 & 技术爱好者',
+          '热爱技术，喜欢分享，致力于探索前端技术的无限可能。',
+          'example@email.com',
+          'example_wechat',
+          null
+        ]
+      );
+      console.log('默认个人资料已插入');
     }
     
     console.log('数据库初始化完成！');

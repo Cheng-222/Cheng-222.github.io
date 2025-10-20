@@ -3,8 +3,12 @@
     <!-- 头部区域 -->
     <header class="blog-header">
       <div class="header-content">
-        <h1 class="blog-title">我的个人博客</h1>
-        <p class="blog-subtitle">记录生活，分享知识</p>
+        <h1 class="blog-title">{{ home.title }}</h1>
+        <p class="blog-subtitle">{{ home.subtitle }}</p>
+        
+        <!-- 取消编辑：移除编辑首页文案按钮与面板 -->
+        
+        <!-- 编辑功能已取消：主页仅展示，不提供编辑入口 -->
       </div>
     </header>
 
@@ -68,6 +72,7 @@
 </template>
 
 <script>
+import { getArticles, getCategories, getHomeConfig } from '../utils/storage'
 export default {
   name: 'Home',
   data() {
@@ -80,59 +85,28 @@ export default {
         { id: 4, name: '项目经验' }
       ],
       currentPage: 1,
-      totalPages: 3
+      totalPages: 3,
+      home: { title: '', subtitle: '' }
     }
   },
   mounted() {
+    this.home = getHomeConfig();
     this.fetchArticles()
   },
   methods: {
     async fetchArticles() {
       try {
-        // 调用后端API获取文章列表
-        const response = await fetch('http://localhost:3000/api/articles?page=' + this.currentPage);
-        const data = await response.json();
-        
-        // 处理标签数据格式，如果是字符串则转换为数组
-        this.articles = data.map(article => ({
+        const all = getArticles();
+        this.totalPages = Math.ceil(all.length / 10) || 1;
+        const start = (this.currentPage - 1) * 10;
+        this.articles = all.slice(start, start + 10).map(article => ({
           ...article,
-          tags: typeof article.tags === 'string' ? article.tags.split(',') : article.tags
+          publishTime: new Date(article.publishTime),
+          tags: Array.isArray(article.tags) ? article.tags : (typeof article.tags === 'string' ? article.tags.split(',') : [])
         }));
+        this.categories = getCategories();
       } catch (error) {
-        console.error('获取文章列表失败:', error);
-        // 如果API调用失败，使用模拟数据
-        this.articles = [
-          {
-            id: 1,
-            title: 'Vue 3 Composition API 最佳实践',
-            publishTime: new Date('2024-01-15'),
-            categoryId: 1,
-            excerpt: 'Vue 3 的 Composition API 为我们提供了更灵活的组件逻辑组织方式，本文将分享一些在实际项目中使用 Composition API 的最佳实践...',
-            tags: ['Vue3', 'Composition API', '前端开发'],
-            views: 1234,
-            comments: 56
-          },
-          {
-            id: 2,
-            title: '如何高效学习新技术栈',
-            publishTime: new Date('2024-01-10'),
-            categoryId: 3,
-            excerpt: '在技术快速迭代的今天，如何高效地学习新技术栈成为每个开发者都需要面对的挑战。本文将分享我的一些学习方法和经验...',
-            tags: ['学习方法', '职业发展'],
-            views: 890,
-            comments: 34
-          },
-          {
-            id: 3,
-            title: 'Node.js 性能优化技巧',
-            publishTime: new Date('2024-01-05'),
-            categoryId: 1,
-            excerpt: 'Node.js 作为服务端 JavaScript 运行环境，其性能优化一直是开发者关注的焦点。本文将介绍一些实用的性能优化技巧...',
-            tags: ['Node.js', '性能优化', '后端开发'],
-            views: 1567,
-            comments: 78
-          }
-        ]
+        console.error('加载本地文章失败:', error);
       }
     },
     formatDate(date) {
@@ -158,8 +132,16 @@ export default {
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage++
-        this.fetchArticles() // 实际项目中应该带页码参数重新获取数据
+        this.fetchArticles()
       }
+    },
+    toggleHomeEdit() {
+      this.editingHome = !this.editingHome
+    },
+    saveHome() {
+      setHomeConfig(this.home)
+      this.editingHome = false
+      alert('首页文案已保存')
     }
   }
 }
@@ -367,4 +349,11 @@ export default {
     align-items: flex-start;
   }
 }
+.header-actions { display: flex; justify-content: center; gap: 10px; margin-top: 12px; }
+.home-edit-panel { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 600px; margin: 12px auto 0; }
+.home-edit-panel label { display:flex; flex-direction:column; font-size: 14px; color:#374151; }
+.home-edit-panel input { margin-top:6px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; }
+.btn { padding: 8px 14px; border: 1px solid #d1d5db; background: #fff; border-radius: 8px; cursor: pointer; }
+.btn:hover { box-shadow: 0 4px 10px rgba(0,0,0,.06); transform: translateY(-1px); }
+.btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
 </style>

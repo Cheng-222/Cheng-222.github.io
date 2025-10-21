@@ -178,6 +178,12 @@ export default {
   created() {
     this.loadCategoryAndArticles()
   },
+  watch: {
+    '$route.params.id': function() {
+      this.currentPage = 1
+      this.loadCategoryAndArticles()
+    }
+  },
   methods: {
     loadCategoryAndArticles() {
       const catId = parseInt(this.$route.params.id)

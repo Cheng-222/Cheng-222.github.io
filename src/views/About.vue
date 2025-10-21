@@ -11,7 +11,7 @@
             </svg>
           </div>
         </div>
-        <label class="edit-avatar">
+        <label class="edit-avatar" v-if="editing">
           <input type="file" accept="image/*" @change="onAvatarSelected" />
           更换头像
         </label>
@@ -151,6 +151,7 @@ export default {
       this.editing = !this.editing;
     },
     onAvatarSelected(e) {
+      if (!this.editing) { alert('请先点击编辑资料'); return; }
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       const reader = new FileReader();

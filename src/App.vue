@@ -8,7 +8,7 @@
             <svg class="logo-icon" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
-            <span class="logo-text">杜程的博客</span>
+            <span class="logo-text">个人博客</span>
           </div>
         </router-link>
         
@@ -52,8 +52,8 @@
       <div class="footer-container">
         <div class="footer-content">
           <div class="footer-info">
-            <p>© 2024 个人技术博客. 保留所有权利.</p>
-            <p>使用 Vue 3 + Node.js + MySQL 构建</p>
+            <p>© 2025 个人技术博客. 保留所有权利.</p>
+            <p>使用 Vue 3 构建</p>
           </div>
           <div class="footer-links">
             <router-link to="/about" class="footer-link">关于我</router-link>

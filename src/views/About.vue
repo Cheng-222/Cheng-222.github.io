@@ -109,6 +109,7 @@
 
 <script>
 import { getProfile, setProfile } from '../utils/storage'
+import { ElMessage } from 'element-plus'
 export default {
   name: 'About',
   data() {
@@ -141,17 +142,17 @@ export default {
       try {
         setProfile(this.profile);
         this.editing = false;
-        alert('资料已保存到浏览器本地');
+        ElMessage.success('资料已保存到浏览器本地');
       } catch (error) {
         console.error('保存资料失败:', error);
-        alert('保存失败，请重试');
+        ElMessage.error('保存失败，请重试');
       }
     },
     toggleEdit() {
       this.editing = !this.editing;
     },
     onAvatarSelected(e) {
-      if (!this.editing) { alert('请先点击编辑资料'); return; }
+      if (!this.editing) { ElMessage.warning('请先点击编辑资料'); return; }
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       const reader = new FileReader();

@@ -86,6 +86,21 @@ export default {
 </script>
 
 <style>
+/* 主题变量 */
+:root {
+  --color-primary: #667eea;
+  --color-primary-600: #5a67d8;
+  --color-text: #1f2937;
+  --color-muted: #6b7280;
+  --color-bg: #f7f8fc;
+  --color-surface: #ffffff;
+  --color-border: #e5e7eb;
+  --color-footer-bg: #111827;
+  --radius: 12px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
 /* 全局样式重置 */
 * {
   margin: 0;
@@ -99,9 +114,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f9f9f9;
-  color: #333;
-  line-height: 1.6;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.7;
 }
 
 /* 应用容器 */
@@ -113,12 +128,11 @@ body {
 
 /* 导航栏样式 */
 .navbar {
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 100;
-  
 }
 
 .navbar-container {
@@ -146,13 +160,13 @@ body {
 .logo-icon {
   width: 24px;
   height: 24px;
-  color: #667eea;
+  color: var(--color-primary);
 }
 
 .logo-text {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #333;
+  color: var(--color-text);
 }
 
 .nav-links {
@@ -162,15 +176,15 @@ body {
 
 .nav-link {
   text-decoration: none;
-  color: #666;
+  color: var(--color-muted);
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   position: relative;
 }
 
 .nav-link:hover,
 .nav-link.router-link-active {
-  color: #667eea;
+  color: var(--color-primary);
 }
 
 .nav-link.router-link-active::after {
@@ -180,7 +194,7 @@ body {
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #667eea;
+  background-color: var(--color-primary);
 }
 
 /* 移动端菜单按钮 */
@@ -194,29 +208,30 @@ body {
 .menu-icon {
   width: 24px;
   height: 24px;
-  color: #333;
+  color: var(--color-text);
 }
 
 /* 移动端导航菜单 */
 .mobile-menu {
   display: none;
-  background-color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  border-top: 1px solid var(--color-border);
 }
 
 .mobile-nav-link {
   display: block;
   padding: 1rem;
   text-decoration: none;
-  color: #666;
+  color: var(--color-muted);
   border-bottom: 1px solid #f0f0f0;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .mobile-nav-link:hover,
 .mobile-nav-link.router-link-active {
   background-color: #f5f5f5;
-  color: #667eea;
+  color: var(--color-primary);
 }
 
 /* 主内容区 */
@@ -226,7 +241,7 @@ body {
 
 /* 页脚样式 */
 .footer {
-  background-color: #333;
+  background-color: var(--color-footer-bg);
   color: white;
   padding: 2rem 0;
   margin-top: 2rem;
@@ -248,7 +263,7 @@ body {
 .footer-info p {
   margin-bottom: 0.5rem;
   color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
 }
 
 .footer-links {
@@ -260,8 +275,8 @@ body {
 .footer-link {
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
+  transition: color 0.2s ease;
+  font-size: 0.92rem;
 }
 
 .footer-link:hover {
@@ -271,7 +286,7 @@ body {
 /* 过渡动画 */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
 
 .fade-enter-from,
@@ -281,22 +296,11 @@ body {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .nav-links {
-    display: none;
-  }
-  
-  .mobile-menu-btn {
-    display: block;
-  }
-  
-  .mobile-menu {
-    display: block;
-  }
-  
-  .footer-links {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-  }
+  .nav-links { display: none; }
+  .mobile-menu-btn { display: block; }
+  .mobile-menu { display: block; }
+  .navbar-container { padding: 0 .75rem; height: 56px; }
+  .logo-text { font-size: 1rem; }
+  .footer-links { flex-wrap: wrap; justify-content: center; gap: 1rem; }
 }
 </style>

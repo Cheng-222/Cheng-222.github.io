@@ -1,4 +1,4 @@
-﻿<template>
+﻿﻿<template>
   <div class="category-container">
     <div class="category-header">
       <h1 class="category-title">{{ currentCategory ? currentCategory.name : '未分类' }}</h1>
@@ -491,20 +491,19 @@ export default {
   margin-bottom: 1.5rem;
 }
 
-.back-home {
-  display: inline-block;
-  padding: 0.6rem 2rem;
-  background-color: #667eea;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
+.back-home { display: inline-block; padding: 0.6rem 2rem; background-color: var(--color-primary); color: white; text-decoration: none; border-radius: 6px; transition: all 0.25s ease; }
+.back-home:hover { background-color: var(--color-primary-600); transform: translateY(-2px); }
 
-.back-home:hover {
-  background-color: #764ba2;
-  transform: translateY(-2px);
-}
+.page-btn { padding: 0.5rem 1rem; background-color: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.25s ease; }
+.page-btn:hover:not(:disabled) { background-color: var(--color-primary-600); }
+.page-info { color: var(--color-muted); font-size: 0.9rem; }
+
+.article-title { margin: 0; font-size: 1.2rem; color: var(--color-text); }
+.article-meta { color: var(--color-muted); font-size: .85rem; display: flex; gap: .6rem; }
+
+.tag:hover { background-color: var(--color-primary); color: #fff; }
+
+.no-articles p { color: var(--color-muted); font-size: 1.1rem; margin-bottom: 1.5rem; }
 
 .pagination {
   display: flex;

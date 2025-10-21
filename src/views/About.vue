@@ -216,7 +216,8 @@ export default {
 
 .btn { padding: 8px 14px; border: 1px solid #d1d5db; background: #fff; border-radius: 8px; cursor: pointer; transition: all .2s ease; }
 .btn:hover { box-shadow: 0 4px 10px rgba(0,0,0,.06); transform: translateY(-1px); }
-.btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+.btn.primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.num { font-size: 22px; font-weight: 700; color: var(--color-primary); }
 .btn.primary:hover { filter: brightness(1.05); }
 .btn.danger { background: #ef4444; color: #fff; border-color: #ef4444; }
 .btn.primary:hover { filter: brightness(1.05); }

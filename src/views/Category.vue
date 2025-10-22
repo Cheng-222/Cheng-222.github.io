@@ -291,15 +291,7 @@ export default {
     onCoverChange(e) {
       const file = e.target.files && e.target.files[0]
       if (!file) return
-      const MAX = this.coverMaxBytes
-      if (file.size > MAX) {
-        const sizeKB = Math.round(file.size / 1024)
-        const maxKB = Math.round(MAX / 1024)
-        this.coverError = `图片过大：${sizeKB}KB，最大${maxKB}KB`
-        this.newCover = ''
-        if (this.$refs.coverInput) this.$refs.coverInput.value = ''
-        return
-      }
+      // 取消大小限制，直接读取为 DataURL
       this.coverError = ''
       const reader = new FileReader()
       reader.onload = () => {

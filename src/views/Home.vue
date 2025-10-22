@@ -81,7 +81,7 @@ export default {
       categories: [
         { id: 1, name: '技术分享' },
         { id: 2, name: '生活随笔' },
-        { id: 3, name: '读书笔记' },
+        { id: 3, name: '资源记录' },
         { id: 4, name: '项目经验' }
       ],
       currentPage: 1,
@@ -97,9 +97,9 @@ export default {
     async fetchArticles() {
       try {
         const all = getArticles();
-        this.totalPages = Math.ceil(all.length / 10) || 1;
-        const start = (this.currentPage - 1) * 10;
-        this.articles = all.slice(start, start + 10).map(article => ({
+        this.totalPages = Math.ceil(all.length / 3) || 1;
+        const start = (this.currentPage - 1) * 3;
+        this.articles = all.slice(start, start + 3).map(article => ({
           ...article,
           publishTime: new Date(article.publishTime),
           tags: Array.isArray(article.tags) ? article.tags : (typeof article.tags === 'string' ? article.tags.split(',') : [])

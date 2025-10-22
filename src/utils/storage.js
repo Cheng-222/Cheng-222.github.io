@@ -19,7 +19,7 @@ const defaultProfile = {
 const defaultCategories = [
   { id: 1, name: '技术分享', description: '分享前端、后端、算法等技术文章' },
   { id: 2, name: '生活随笔', description: '记录生活中的点点滴滴' },
-  { id: 3, name: '读书笔记', description: '阅读心得和知识总结' },
+  { id: 3, name: '资源记录', description: '记录平日积累的资源' },
   { id: 4, name: '项目经验', description: '项目开发中的经验和教训' }
 ];
 
@@ -90,6 +90,26 @@ const defaultArticles = [
   }
 ];
 
+// 新增：一次性迁移旧分类名称（id=3）到“资源记录”
+function maybeMigrateCategories() {
+  try {
+    const raw = localStorage.getItem(KEYS.categories);
+    if (!raw) return;
+    const cats = JSON.parse(raw);
+    let changed = false;
+    cats.forEach(c => {
+      if (c && c.id === 3 && c.name === '读书笔记') {
+        c.name = '资源记录';
+        c.description = '记录平日积累的资源';
+        changed = true;
+      }
+    });
+    if (changed) {
+      localStorage.setItem(KEYS.categories, JSON.stringify(cats));
+    }
+  } catch {}
+}
+
 // 初始化本地数据（仅在首次缺失时）
 const HOME_KEY = 'blog_home_cfg'
 const defaultHomeConfig = { title: '我的个人博客', subtitle: '记录生活，分享知识' }
@@ -126,6 +146,7 @@ function ensureSeeded() {
 }
 
 ensureSeeded();
+maybeMigrateCategories();
 
 // Profile
 export function getProfile() {
@@ -237,6 +258,7 @@ export function resetAll() {
     localStorage.removeItem(KEYS.articles);
     localStorage.removeItem(KEYS.comments);
     ensureSeeded();
+    maybeMigrateCategories();
   } catch (e) {
     console.error('重置本地数据失败:', e);
   }

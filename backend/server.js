@@ -52,7 +52,7 @@ const mockArticles = [
 const mockCategories = [
   { id: 1, name: '技术分享', description: '分享前端、后端、算法等技术文章' },
   { id: 2, name: '生活随笔', description: '记录生活中的点点滴滴' },
-  { id: 3, name: '读书笔记', description: '阅读心得和知识总结' },
+  { id: 3, name: '资源记录', description: '记录平日积累的资源' },
   { id: 4, name: '项目经验', description: '项目开发中的经验和教训' }
 ];
 

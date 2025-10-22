@@ -1,105 +1,91 @@
-const mysql = require('mysql2/promise');
-require('dotenv').config();
+const mysql = require('mysql2/promise')
+require('dotenv').config()
 
-// 数据库连接配置
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: 'mysql' // 连接到默认的mysql数据库以创建新数据库
-};
+}
 
-// 初始化数据库
 async function initDatabase() {
-  let connection;
-  
+  let connection
   try {
-    // 连接到MySQL服务器
-    connection = await mysql.createConnection(dbConfig);
-    console.log('已连接到MySQL服务器');
-    
-    // 创建数据库
-    const dbName = process.env.DB_NAME || 'blog_db';
-    await connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
-    console.log(`数据库 '${dbName}' 已创建或已存在`);
-    
-    // 切换到新创建的数据库
-    await connection.query(`USE ${dbName}`);
-    
+    connection = await mysql.createConnection(dbConfig)
+    console.log('已连接到 MySQL，开始初始化数据库...')
+
+    await connection.query('CREATE DATABASE IF NOT EXISTS blog')
+    await connection.query('USE blog')
+    console.log('数据库 blog 已准备就绪')
+
     // 创建分类表
     await connection.query(`
       CREATE TABLE IF NOT EXISTS categories (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        name VARCHAR(50) NOT NULL UNIQUE,
-        description TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT
       )
-    `);
-    console.log('分类表已创建');
-    
+    `)
+
     // 创建文章表
     await connection.query(`
       CREATE TABLE IF NOT EXISTS articles (
-        id INT PRIMARY KEY AUTO_INCREMENT,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
-        content LONGTEXT NOT NULL,
+        content MEDIUMTEXT,
         excerpt TEXT,
-        publishTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         categoryId INT,
-        tags TEXT,
+        tags VARCHAR(255),
         views INT DEFAULT 0,
         comments INT DEFAULT 0,
-        readTime INT DEFAULT 5,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        readTime INT DEFAULT 0,
+        publishTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (categoryId) REFERENCES categories(id)
       )
-    `);
-    console.log('文章表已创建');
-    
+    `)
+
     // 创建评论表
     await connection.query(`
       CREATE TABLE IF NOT EXISTS comments (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        articleId INT NOT NULL,
-        author VARCHAR(50) NOT NULL,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        articleId INT,
+        author VARCHAR(100) NOT NULL,
         content TEXT NOT NULL,
-        time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         likes INT DEFAULT 0,
-        FOREIGN KEY (articleId) REFERENCES articles(id) ON DELETE CASCADE
+        time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (articleId) REFERENCES articles(id)
       )
-    `);
-    console.log('评论表已创建');
+    `)
 
     // 创建个人资料表
     await connection.query(`
       CREATE TABLE IF NOT EXISTS profile (
-        id INT PRIMARY KEY,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
-        title VARCHAR(255) DEFAULT '',
+        title VARCHAR(255),
         intro TEXT,
         email VARCHAR(255) DEFAULT '',
         wechat VARCHAR(255) DEFAULT '',
         avatar MEDIUMTEXT
       )
-    `);
-    console.log('个人资料表已创建');
+    `)
+    console.log('个人资料表已创建')
     
     // 插入默认分类数据
-    const [categories] = await connection.query('SELECT * FROM categories');
+    const [categories] = await connection.query('SELECT * FROM categories')
     if (categories.length === 0) {
       await connection.query(`
         INSERT INTO categories (name, description) VALUES
         ('技术分享', '分享前端、后端、算法等技术文章'),
         ('生活随笔', '记录生活中的点点滴滴'),
-        ('读书笔记', '阅读心得和知识总结'),
+        ('资源记录', '记录平日积累的资源'),
         ('项目经验', '项目开发中的经验和教训')
-      `);
-      console.log('默认分类数据已插入');
+      `)
+      console.log('默认分类数据已插入')
     }
     
     // 插入示例文章数据
-    const [articles] = await connection.query('SELECT * FROM articles');
+    const [articles] = await connection.query('SELECT * FROM articles')
     if (articles.length === 0) {
       await connection.query(`
         INSERT INTO articles (title, content, excerpt, categoryId, tags, views, comments, readTime) VALUES
@@ -115,52 +101,38 @@ async function initDatabase() {
          '<h2>性能优化的重要性</h2><p>Node.js 作为服务端 JavaScript 运行环境，其性能优化一直是开发者关注的焦点。</p><h2>实用的优化技巧</h2><ul><li>使用异步操作</li><li>合理使用缓存</li><li>优化数据库查询</li><li>使用集群模式</li></ul>',
          'Node.js 作为服务端 JavaScript 运行环境，其性能优化一直是开发者关注的焦点。本文将介绍一些实用的性能优化技巧...',
          1, 'Node.js,性能优化,后端开发', 1567, 78, 10)
-      `);
-      console.log('示例文章数据已插入');
+      `)
+      console.log('示例文章数据已插入')
     }
     
     // 插入示例评论数据
-    const [comments] = await connection.query('SELECT * FROM comments');
+    const [comments] = await connection.query('SELECT * FROM comments')
     if (comments.length === 0) {
       await connection.query(`
         INSERT INTO comments (articleId, author, content, likes) VALUES
         (1, '张三', '这篇文章写得真好，学到了很多！', 12),
         (1, '李四', 'Composition API 确实比 Options API 更灵活，特别是在逻辑复用时。', 8),
         (2, '王五', '学习方法分享得很实用，感谢！', 5)
-      `);
-      console.log('示例评论数据已插入');
+      `)
+      console.log('示例评论数据已插入')
     }
 
     // 插入默认个人资料
-    const [profileRows] = await connection.query('SELECT * FROM profile WHERE id = 1');
-    if (profileRows.length === 0) {
-      await connection.query(
-        'INSERT INTO profile (id, name, title, intro, email, wechat, avatar) VALUES (1, ?, ?, ?, ?, ?, ?)',
-        [
-          '技术博主',
-          '前端工程师 & 技术爱好者',
-          '热爱技术，喜欢分享，致力于探索前端技术的无限可能。',
-          'example@email.com',
-          'example_wechat',
-          null
-        ]
-      );
-      console.log('默认个人资料已插入');
+    const [profiles] = await connection.query('SELECT * FROM profile')
+    if (profiles.length === 0) {
+      await connection.query(`
+        INSERT INTO profile (name, title, intro, email, wechat, avatar) VALUES
+        ('测试保存', '后端改为纯前端模式', '这里是我的个人简介。现在使用纯前端存储，数据保存在浏览器的 localStorage 中。', '', '', '')
+      `)
+      console.log('默认个人资料已插入')
     }
-    
-    console.log('数据库初始化完成！');
-    
+
+    console.log('数据库初始化完成')
   } catch (error) {
-    console.error('数据库初始化失败:', error.message);
-    console.log('请确保MySQL服务已启动，并且用户凭据正确。');
-    console.log('即使没有数据库，应用也可以使用模拟数据正常运行。');
+    console.error('初始化数据库失败:', error)
   } finally {
-    if (connection) {
-      await connection.end();
-      console.log('数据库连接已关闭');
-    }
+    if (connection) await connection.end()
   }
 }
 
-// 执行初始化
-initDatabase();
+initDatabase()

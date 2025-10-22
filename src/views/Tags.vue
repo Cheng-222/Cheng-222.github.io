@@ -80,7 +80,7 @@ export default {
       categories: [
         { id: 1, name: '技术分享' },
         { id: 2, name: '生活随笔' },
-        { id: 3, name: '读书笔记' },
+        { id: 3, name: '资源记录' },
         { id: 4, name: '项目经验' }
       ],
       currentPage: 1,
@@ -115,9 +115,9 @@ export default {
           publishTime: new Date(article.publishTime)
         }));
         this.categories = getCategories();
-        this.totalPages = Math.ceil(filtered.length / 10) || 1;
-        const start = (this.currentPage - 1) * 10;
-        this.articles = filtered.slice(start, start + 10);
+        this.totalPages = Math.ceil(filtered.length / 3) || 1;
+        const start = (this.currentPage - 1) * 3;
+        this.articles = filtered.slice(start, start + 3);
       } catch (error) {
         console.error('加载标签文章失败:', error);
       }

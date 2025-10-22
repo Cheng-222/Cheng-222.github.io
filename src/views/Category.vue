@@ -1,11 +1,13 @@
-﻿﻿<template>
-  <div class="category-container">
+﻿<template>
+  <div class="category-container" :style="theme.cssVars">
     <div class="category-header">
+      <div class="category-emoji">{{ theme.emoji }}</div>
       <h1 class="category-title">{{ currentCategory ? currentCategory.name : '未分类' }}</h1>
       <p class="category-description">{{ currentCategory ? currentCategory.description : '查看所有文章分类' }}</p>
       <div class="header-actions">
-        <button v-if="currentCategory && currentCategory.id === 1" class="btn success" @click="toggleAddArticle">{{ showAddPanel ? '取消' : '添加文章' }}</button>
-        <button v-if="showAddPanel" class="btn primary" @click="saveNewArticle">保存</button>
+        <button v-if="currentCategory && [1,2,3,4].includes(currentCategory.id)" class="btn success" @click="toggleAddArticle">
+          {{ showAddPanel ? '取消' : '添加文章' }}
+        </button>
       </div>
       <!-- 添加文章面板 -->
       <div v-if="showAddPanel" class="add-article-panel">
@@ -87,7 +89,7 @@
       <div class="content-wrapper">
         <!-- 文章分类 -->
         <article 
-          v-for="article in articles" 
+          v-for="article in articles.slice((currentPage-1)*pageSize, (currentPage-1)*pageSize + pageSize)" 
           :key="article.id" 
           class="article-card"
           @click="goToArticle(article.id)"
@@ -157,7 +159,7 @@ export default {
       articles: [],
       currentCategory: null,
       currentPage: 1,
-      pageSize: 6,
+      pageSize: 3,
       showAddPanel: false,
       showEditPanel: false,
       editingId: null,
@@ -173,6 +175,16 @@ export default {
   computed: {
     totalPages() {
       return Math.ceil(this.articles.length / this.pageSize) || 1
+    },
+    theme() {
+      const id = this.currentCategory ? this.currentCategory.id : 0
+      const map = {
+        1: { cssVars: { '--acc': '#0ea5e9', '--acc-600': '#0284c7', '--grad-start': '#06b6d4', '--grad-end': '#3b82f6' }, emoji: '🧠' },
+        2: { cssVars: { '--acc': '#a855f7', '--acc-600': '#7c3aed', '--grad-start': '#8b5cf6', '--grad-end': '#ec4899' }, emoji: '🌸' },
+        3: { cssVars: { '--acc': '#16a34a', '--acc-600': '#15803d', '--grad-start': '#10b981', '--grad-end': '#22c55e' }, emoji: '🔗' },
+        4: { cssVars: { '--acc': '#f59e0b', '--acc-600': '#d97706', '--grad-start': '#f59e0b', '--grad-end': '#f97316' }, emoji: '🚀' }
+      }
+      return map[id] || { cssVars: { '--acc': '#667eea', '--acc-600': '#5a67d8', '--grad-start': '#667eea', '--grad-end': '#764ba2' }, emoji: '📄' }
     }
   },
   created() {
@@ -343,12 +355,13 @@ export default {
 }
 
 .category-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--grad-start) 0%, var(--grad-end) 100%);
   color: white;
   padding: 3rem 0;
   text-align: center;
   margin-bottom: 2rem;
 }
+.category-emoji { font-size: 2.2rem; margin-bottom: .5rem; }
 
 .category-title {
   font-size: 2.2rem;
@@ -389,7 +402,7 @@ export default {
 .article-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-  border-left-color: #667eea;
+  border-left-color: var(--acc);
 }
 
 .article-header {
@@ -455,7 +468,7 @@ export default {
 }
 
 .tag:hover {
-  background-color: #667eea;
+  background-color: var(--acc);
   color: white;
 }
 
@@ -516,7 +529,7 @@ export default {
 
 .page-btn {
   padding: 0.5rem 1rem;
-  background-color: #667eea;
+  background-color: var(--acc);
   color: white;
   border: none;
   border-radius: 4px;
@@ -525,7 +538,7 @@ export default {
 }
 
 .page-btn:hover:not(:disabled) {
-  background-color: #764ba2;
+  background-color: var(--acc-600);
 }
 
 .page-btn:disabled {
@@ -550,7 +563,7 @@ export default {
 .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .9rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #111827; cursor: pointer; transition: all .2s; }
 .btn:hover { box-shadow: 0 4px 10px rgba(0,0,0,.06); transform: translateY(-1px); }
 .btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-.btn.success { background: #10b981; color: #fff; border-color: #10b981; }
+.btn.success { background: var(--acc); color: #fff; border-color: var(--acc); }
 .header-actions { margin-top: 1rem; display: flex; justify-content: center; gap: .6rem; }
 .add-article-panel { background: #fff; border-radius: 12px; padding: 1rem; margin-top: 1rem; box-shadow: 0 6px 18px rgba(0,0,0,.08); max-width: 720px; display: grid; grid-template-columns: 1fr 1fr; gap: .8rem 1rem; justify-content: center; margin-left: auto; margin-right: auto; }
 .add-article-panel label { display: flex; flex-direction: column; font-size: .9rem; color: #374151; }

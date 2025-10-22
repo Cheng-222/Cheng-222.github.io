@@ -157,7 +157,7 @@ export default {
       categories: [
         { id: 1, name: '技术分享' },
         { id: 2, name: '生活随笔' },
-        { id: 3, name: '读书笔记' },
+        { id: 3, name: '资源记录' },
         { id: 4, name: '项目经验' }
       ]
     }

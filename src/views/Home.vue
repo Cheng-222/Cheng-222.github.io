@@ -204,4 +204,31 @@ export default {
 .btn { padding: 8px 14px; border: 1px solid #d1d5db; background: #fff; border-radius: 8px; cursor: pointer; }
 .btn:hover { box-shadow: 0 4px 10px rgba(0,0,0,.06); transform: translateY(-1px); }
 .btn.primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+@media (max-width: 480px) {
+  .header-content { padding: 0 1rem; }
+  .blog-header { padding: 2rem 0; }
+  .blog-title { font-size: clamp(1.2rem, 5.2vw, 1.4rem); }
+  .blog-subtitle { font-size: clamp(.9rem, 3.8vw, 1rem); }
+
+  .main-content { padding: 0 .75rem; }
+  .content-wrapper { max-width: none; }
+
+  .article-card { padding: 1rem; margin-bottom: 1rem; border-left-width: 3px; }
+  .article-header { margin-bottom: .6rem; }
+  .article-title { font-size: clamp(1rem, 4.4vw, 1.25rem); line-height: 1.3; }
+  .article-meta { gap: .5rem; flex-wrap: wrap; font-size: .8rem; }
+
+  .article-excerpt { font-size: .95rem; line-height: 1.6; margin-bottom: 1rem; }
+
+  .article-footer { gap: .6rem; }
+  .article-tags { gap: .4rem; }
+  .tag { padding: .25rem .6rem; font-size: .75rem; }
+
+  .article-stats { gap: .6rem; font-size: .8rem; }
+  .icon { width: 14px; height: 14px; }
+
+  .pagination { gap: .6rem; margin-top: 2rem; }
+  .page-btn { padding: .4rem .8rem; font-size: .9rem; }
+  .page-info { font-size: .85rem; }
+}
 </style>

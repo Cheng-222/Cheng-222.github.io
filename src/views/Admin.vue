@@ -374,4 +374,17 @@ export default {
   border: 1px solid #d1d5db;
   border-radius: var(--radius);
 }
+@media (max-width: 480px) {
+  .tabs { flex-wrap: wrap; gap: .4rem; }
+  .tabs button { padding: .45rem .7rem; font-size: .9rem; }
+
+  .card { padding: .8rem; }
+  .grid { grid-template-columns: 1fr; gap: .6rem; }
+
+  .list-item { flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .item-actions { gap: .4rem; }
+
+  .primary, .danger { padding: .45rem .7rem; font-size: .9rem; }
+  .cover-preview img { max-height: 160px; }
+}
 </style>

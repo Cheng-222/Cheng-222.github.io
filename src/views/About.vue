@@ -115,7 +115,6 @@ export default {
   data() {
     return {
       editing: false,
-      // apiBase: import.meta.env.VITE_API_BASE || 'http://localhost:3000', // 已移除后端依赖
       profile: {
         name: '',
         title: '',

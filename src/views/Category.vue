@@ -26,7 +26,7 @@
         <label>
           或选择本地封面
           <input type="file" accept="image/*" ref="coverInput" @change="onCoverChange" />
-          <span class="cover-error" v-if="coverError">{{ coverError }}</span>
+          <span class="muted">图片将以DataURL存储，建议不超过2MB</span>
           <div class="cover-preview" v-if="newCover">
             <img :src="newCover" alt="封面预览" />
             <button class="btn" @click="clearCover">清除封面</button>
@@ -63,7 +63,7 @@
         <label>
           或选择本地封面
           <input type="file" accept="image/*" ref="coverInput" @change="onCoverChange" />
-          <span class="cover-error" v-if="coverError">{{ coverError }}</span>
+          <span class="muted">图片将以DataURL存储，建议不超过2MB</span>
           <div class="cover-preview" v-if="newCover">
             <img :src="newCover" alt="封面预览" />
             <button class="btn" @click="clearCover">清除封面</button>
@@ -167,9 +167,7 @@ export default {
       newTags: '',
       newCover: '',
       newExcerpt: '',
-      editorMarkdown: '',
-      coverMaxBytes: 500 * 1024,
-      coverError: ''
+      editorMarkdown: ''
     }
   },
   computed: {
@@ -292,7 +290,6 @@ export default {
       const file = e.target.files && e.target.files[0]
       if (!file) return
       // 取消大小限制，直接读取为 DataURL
-      this.coverError = ''
       const reader = new FileReader()
       reader.onload = () => {
         this.newCover = reader.result
@@ -320,7 +317,7 @@ export default {
 .add-article-panel { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; margin-top: .8rem; }
 .add-article-panel label { display: flex; flex-direction: column; }
 .add-article-panel .full-row { grid-column: 1 / -1; }
-.cover-error { color: #ef4444; font-size: .9rem; }
+.muted { color: var(--color-muted); font-size: .9rem; }
 .cover-preview { grid-column: 1 / -1; display: flex; align-items: center; gap: .6rem; }
 .cover-preview img { width: 160px; height: 90px; object-fit: cover; border-radius: 6px; border: 1px solid #eee; }
 .main-content { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 1rem; }
@@ -402,35 +399,15 @@ export default {
 }
 
 .article-title {
-  font-size: 1.8rem;
+  font-size: clamp(1.4rem, 1.8vw + .8rem, 1.9rem);
   margin: 0 0 1rem 0;
-  color: #333;
+  color: var(--color-text);
   line-height: 1.4;
 }
 
-.article-meta {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.category {
-  padding: 0.2rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.category-1 { background-color: #e3f2fd; color: #1976d2; }
-.category-2 { background-color: #f3e5f5; color: #7b1fa2; }
-.category-3 { background-color: #e8f5e9; color: #388e3c; }
-.category-4 { background-color: #fff8e1; color: #f57c00; }
-
 .article-excerpt {
-  color: #666;
-  line-height: 1.6;
+  color: var(--color-muted);
+  line-height: 1.7;
   margin-bottom: 1.5rem;
   font-size: 1.05rem;
 }
@@ -561,4 +538,24 @@ export default {
 .add-article-panel label { display: flex; flex-direction: column; font-size: .9rem; color: #374151; }
 .add-article-panel input, .add-article-panel textarea { margin-top: .4rem; padding: .6rem .7rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: .95rem; }
 .add-article-panel .full-row { grid-column: 1 / -1; }
+@media (max-width: 480px) {
+  .category-header { padding: 1.6rem 0; }
+  .category-title { font-size: clamp(1.4rem, 2.5vw + .8rem, 1.8rem); }
+  .category-description { font-size: .95rem; max-width: 90%; }
+
+  .content-wrapper { max-width: 100%; padding: 0 .6rem; }
+  .article-card { padding: 1rem; margin-bottom: 1rem; }
+  .article-header { flex-direction: column; align-items: flex-start; gap: .4rem; }
+  .article-title { font-size: clamp(1.1rem, 2vw + .7rem, 1.4rem); margin-bottom: .4rem; }
+  .article-meta { font-size: .8rem; gap: .4rem; flex-wrap: wrap; }
+  .article-cover { max-height: 160px; border-radius: 10px; }
+  .article-excerpt { font-size: .95rem; line-height: 1.7; }
+  .article-footer { gap: .6rem; }
+  .article-tags .tag { padding: .25rem .6rem; font-size: .8rem; }
+  .article-stats .icon { width: 14px; height: 14px; }
+
+  .pagination { margin-top: 2rem; }
+  .page-btn { padding: .45rem .8rem; font-size: .9rem; }
+  .page-info { font-size: .85rem; }
+}
 </style>

@@ -208,9 +208,9 @@ export default {
 .edit-avatar input { display: none; }
 
 .hero-right { display: flex; flex-direction: column; justify-content: center; }
-.hero-name { font-size: 26px; font-weight: 700; margin: 0; color: #111827; }
-.hero-title { margin: 6px 0 10px; color: #4b5563; font-weight: 500; }
-.hero-intro { color: #374151; line-height: 1.7; }
+.hero-name { font-size: 26px; font-weight: 700; margin: 0; color: var(--color-text); }
+.hero-title { margin: 6px 0 10px; color: var(--color-muted); font-weight: 500; }
+.hero-intro { color: var(--color-text); line-height: 1.7; }
 .hero-actions { margin-top: 14px; display: flex; gap: 10px; }
 
 .btn { padding: 8px 14px; border: 1px solid #d1d5db; background: #fff; border-radius: 8px; cursor: pointer; transition: all .2s ease; }
@@ -254,5 +254,33 @@ export default {
   .hero { grid-template-columns: 1fr; text-align: center; }
   .hero-right { align-items: center; }
   .card-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .about-page { padding: 16px; }
+  .hero { padding: 16px; gap: 16px; }
+  .avatar-ring { width: 140px; height: 140px; }
+  .avatar { width: 134px; height: 134px; }
+  .hero-name { font-size: 22px; }
+  .hero-title { font-size: 14px; }
+  .hero-intro { font-size: 14px; line-height: 1.75; }
+  .hero-actions { gap: 8px; }
+  .btn { padding: 7px 12px; }
+
+  .edit-panel { padding: 12px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .full-row { grid-column: 1 / -1; }
+
+  .card-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
+  .card { padding: 16px; border-radius: 12px; }
+  .card h3 { font-size: 16px; }
+  .card p { font-size: 14px; }
+
+  .chips { gap: 8px; }
+  .chip { padding: 5px 10px; font-size: 12px; }
+
+  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat { padding: 12px; }
+  .num { font-size: 20px; }
+  .label { font-size: 12px; }
 }
 </style>

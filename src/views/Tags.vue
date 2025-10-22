@@ -158,7 +158,7 @@ export default {
 }
 
 .tags-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #764ba2 100%);
   color: white;
   padding: 3rem 0;
   text-align: center;
@@ -193,7 +193,7 @@ export default {
 .article-card { background: var(--color-surface); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.25s ease; border-left: 4px solid transparent; }
 .article-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-left-color: var(--color-primary); }
 
-.article-title { font-size: 1.8rem; margin: 0 0 1rem 0; color: var(--color-text); line-height: 1.4; }
+.article-title { font-size: clamp(1.4rem, 1.8vw + .8rem, 1.9rem); margin: 0 0 1rem 0; color: var(--color-text); line-height: 1.4; }
 .article-meta { display: flex; align-items: center; gap: 1rem; font-size: 0.9rem; color: var(--color-muted); }
 
 .tag { padding: 0.3rem 0.8rem; background-color: #f5f5f5; border-radius: 20px; font-size: 0.8rem; color: var(--color-muted); cursor: pointer; transition: all 0.25s ease; }
@@ -202,6 +202,7 @@ export default {
 
 .page-btn { padding: 0.5rem 1rem; background-color: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.25s ease; }
 .page-btn:hover:not(:disabled) { background-color: var(--color-primary-600); }
+.page-btn:disabled { background-color: #ccc; cursor: not-allowed; }
 .page-info { color: var(--color-muted); font-size: 0.9rem; }
 .tag:hover {
   background-color: #667eea;
@@ -248,12 +249,13 @@ export default {
 .back-home {
   display: inline-block;
   padding: 0.6rem 2rem;
-  background-color: #667eea;
+  background-color: var(--color-primary);
   color: white;
   text-decoration: none;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  border-radius: 6px;
+  transition: all 0.25s ease;
 }
+.back-home:hover { background-color: var(--color-primary-600); transform: translateY(-2px); }
 
 .back-home:hover {
   background-color: #764ba2;
@@ -293,26 +295,30 @@ export default {
   font-size: 0.9rem;
 }
 
-@media (max-width: 768px) {
-  .tags-header {
-    padding: 2rem 0;
-  }
-  
-  .tags-title {
-    font-size: 1.8rem;
-  }
-  
-  .article-card {
-    padding: 1.5rem;
-  }
-  
-  .article-title {
-    font-size: 1.5rem;
-  }
-  
-  .article-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+@media (max-width: 480px) {
+  .tags-header { padding: 2rem 0; }
+  .tags-title { font-size: clamp(1.4rem, 4.5vw, 1.8rem); }
+  .tags-description { font-size: clamp(.95rem, 3.6vw, 1.05rem); max-width: 90%; }
+
+  .main-content { padding: 0 .75rem; }
+  .content-wrapper { max-width: none; }
+
+  .article-card { padding: 1rem; margin-bottom: 1rem; border-left-width: 3px; }
+  .article-header { margin-bottom: .6rem; }
+  .article-title { font-size: clamp(1rem, 4.4vw, 1.25rem); line-height: 1.3; }
+  .article-meta { gap: .5rem; flex-wrap: wrap; font-size: .8rem; }
+
+  .article-excerpt { font-size: .95rem; line-height: 1.6; margin-bottom: 1rem; }
+
+  .article-footer { gap: .6rem; }
+  .article-tags { gap: .4rem; }
+  .tag { padding: .25rem .6rem; font-size: .75rem; }
+
+  .article-stats { gap: .6rem; font-size: .8rem; }
+  .icon { width: 14px; height: 14px; }
+
+  .pagination { gap: .6rem; margin-top: 2rem; }
+  .page-btn { padding: .4rem .8rem; font-size: .9rem; }
+  .page-info { font-size: .85rem; }
 }
 </style>

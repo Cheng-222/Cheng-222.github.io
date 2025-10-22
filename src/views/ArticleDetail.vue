@@ -326,7 +326,7 @@ textarea { width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 6p
 .comment-content { flex: 1; }
 .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .comment-author { font-weight: 500; color: var(--color-text); }
-.comment-time { font-size: 0.8rem; color: #999; }
+.comment-time { font-size: 0.8rem; color: var(--color-muted); }
 .comment-text { color: var(--color-muted); line-height: 1.7; margin-bottom: 0.5rem; }
 .comment-actions { display: flex; gap: 1rem; }
 .like-btn { display: flex; align-items: center; gap: 0.3rem; background: none; border: none; color: #999; cursor: pointer; font-size: 0.8rem; transition: all 0.25s ease; }
@@ -341,5 +341,38 @@ textarea { width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 6p
   .article-nav { flex-direction: column; gap: 1.5rem; }
   .prev-article, .next-article { max-width: 100%; }
   .share-buttons { flex-wrap: wrap; }
+}
+@media (max-width: 480px) {
+  .article-detail-container { padding: 1.2rem 0; }
+  .article-wrapper { padding: 1rem; }
+
+  .article-header { margin-bottom: 1.2rem; padding-bottom: 1rem; }
+  .article-title { font-size: clamp(1.2rem, 4.8vw, 1.5rem); line-height: 1.3; }
+  .article-meta { gap: .5rem; flex-wrap: wrap; font-size: .85rem; }
+
+  .detail-cover .cover-img { max-height: 200px; border-radius: 10px; }
+
+  .article-body { font-size: 1rem; line-height: 1.8; }
+  .article-body h2 { font-size: 1.4rem; margin: 1.4rem 0 .8rem; }
+  .article-body pre { padding: .75rem; }
+  .article-body code { font-size: .85rem; }
+
+  .article-stats { gap: 1rem; margin: 1.2rem 0; }
+  .stat-item { font-size: .85rem; }
+  .icon { width: 16px; height: 16px; }
+
+  .share-buttons { gap: .6rem; }
+  .share-btn { padding: .5rem .8rem; font-size: .85rem; }
+
+  .article-nav { margin: 1.6rem 0; gap: 1rem; }
+  .nav-title { font-size: .9rem; }
+
+  .comment-title { font-size: 1.3rem; margin-bottom: 1rem; }
+  textarea { padding: .8rem; font-size: .95rem; min-height: 90px; }
+  .submit-comment { padding: .5rem 1.2rem; font-size: .95rem; }
+
+  .comment-list { gap: 1rem; }
+  .comment-item { gap: .8rem; }
+  .comment-avatar { width: 32px; height: 32px; }
 }
 </style>

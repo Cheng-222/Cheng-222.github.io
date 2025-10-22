@@ -48,9 +48,12 @@
         <label>
           或选择本地封面
           <input type="file" accept="image/*" ref="adminCoverInput" @change="onAdminCoverChange" />
-          <span class="muted" v-if="coverError">{{ coverError }}</span>
+          <span class="muted">图片将以DataURL存储，建议不超过2MB</span>
           <div class="cover-preview" v-if="articleForm.cover">
             <img :src="articleForm.cover" alt="封面预览" />
+            <div class="actions">
+              <button @click="clearCover">清除封面</button>
+            </div>
           </div>
         </label>
         <div>
@@ -133,9 +136,7 @@ export default {
       categories: [],
       articleForm: { id: null, title: '', categoryId: 1, excerpt: '', content: '', tagsInput: '', cover: '' },
       categoryForm: { id: null, name: '', description: '' },
-      dumpText: '',
-      coverMaxBytes: 500 * 1024,
-      coverError: ''
+      dumpText: ''
     }
   },
   mounted() {
@@ -161,7 +162,6 @@ export default {
     },
     resetArticleForm() {
       this.articleForm = { id: null, title: '', categoryId: 1, excerpt: '', content: '', tagsInput: '', cover: '' }
-      this.coverError = ''
       if (this.$refs.adminCoverInput) this.$refs.adminCoverInput.value = ''
     },
     saveArticle() {
@@ -261,21 +261,15 @@ export default {
     onAdminCoverChange(e) {
       const file = e.target.files && e.target.files[0]
       if (!file) return
-      const MAX = this.coverMaxBytes
-      if (file.size > MAX) {
-        const sizeKB = Math.round(file.size / 1024)
-        const maxKB = Math.round(MAX / 1024)
-        this.coverError = `图片过大：${sizeKB}KB，最大${maxKB}KB`
-        this.articleForm.cover = ''
-        if (this.$refs.adminCoverInput) this.$refs.adminCoverInput.value = ''
-        return
-      }
-      this.coverError = ''
       const reader = new FileReader()
       reader.onload = () => {
         this.articleForm.cover = reader.result
       }
       reader.readAsDataURL(file)
+    },
+    clearCover() {
+      this.articleForm.cover = ''
+      if (this.$refs.adminCoverInput) this.$refs.adminCoverInput.value = ''
     }
   }
 }

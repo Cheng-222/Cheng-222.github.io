@@ -10,9 +10,8 @@
 - 性能优化：封面图 `loading="lazy"` 与 `decoding="async"`，尽量减少首屏阻塞。
 
 ## 目录结构
-- `src/views/`：页面级组件（Home、Category、Tags、ArticleDetail、About）
-- `src/utils/storage.js`：模拟数据存取
-- `src/style.css`：全局样式与主题变量
+- `src/views/`：页面级组件（Home、Category、Tags、ArticleDetail、About、Admin）
+- `src/utils/storage.js`：本地存储工具，替代后端 API
 
 ## 本地开发
 ```bash
@@ -28,12 +27,13 @@ npm run build
 
 ## 部署（GitHub Pages 示例）
 - 远程仓库：`origin https://github.com/Cheng-222/Cheng-222.github.io.git`
-- 直接推送到 `master`（或 `main`），GitHub Pages 会从仓库根或 `docs/` 目录提供静态站点。
+- 推送到 `master`（或 `main`）触发 CI，将 `./dist` 部署到 `gh-pages` 分支。
 
 ## 最近改动摘要
 - Category/Tags/ArticleDetail/About：替换硬编码颜色为主题变量，统一按钮与文本色，优化 hover/active
 - ArticleDetail：新增 `sanitizedMarkdown`/`sanitizedLegacyHtml`，过滤与封面相同的图片；正文图片加入最大宽度与自适应
 - About：统计数字与按钮统一使用主题色
+- 移除未使用的示例组件与样式文件；后端目录与脚本已清理
 
 ## 许可证
 此项目供学习与求职展示使用。

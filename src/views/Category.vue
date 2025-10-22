@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="category-container" :style="theme.cssVars">
     <div class="category-header">
       <div class="category-emoji">{{ theme.emoji }}</div>
@@ -44,6 +44,10 @@
             :autoFocus="false"
             :placeholder="'在此输入正文，点击插入代码可添加代码块'"
           />
+        </div>
+        <div class="full-row" style="display:flex; gap:.6rem; justify-content:flex-end;">
+          <button class="btn" @click="toggleAddArticle">取消</button>
+          <button class="btn success" @click="saveNewArticle">保存</button>
         </div>
       </div>
       <!-- 编辑文章面板 -->

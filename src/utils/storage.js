@@ -148,26 +148,6 @@ function ensureSeeded() {
 ensureSeeded();
 maybeMigrateCategories();
 
-// 新增：从远端 JSON 引导（覆盖本地存储）
-export async function bootstrapRemoteData() {
-  try {
-    const url = `/content/data.json?t=${Date.now()}`;
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data && typeof data === 'object') {
-      if (data.profile) setProfile(data.profile);
-      if (Array.isArray(data.categories)) setCategories(data.categories);
-      if (Array.isArray(data.articles)) setArticles(data.articles);
-      // 可选：commentsMap（当前 Decap 配置未管理此字段）
-      if (data.commentsMap && typeof data.commentsMap === 'object') setCommentsMap(data.commentsMap);
-    }
-  } catch (e) {
-    // 拉取失败时静默回退到本地数据
-    console.warn('远端数据拉取失败，使用本地数据：', e);
-  }
-}
-
 // Profile
 export function getProfile() {
   try {
